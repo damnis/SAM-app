@@ -582,7 +582,7 @@ if isinstance(marktrendement, (int, float)): col1.metric("Marktrendement (Buy & 
 
 if isinstance(sam_rendement, (int, float)): col2.metric("📊 SAM-rendement", f"{sam_rendement:+.2f}%") st.caption(f"Aantal afgeronde trades: {len(trades)} binnen deze periode.") else: col2.metric("📊 SAM-rendement", "n.v.t.")
 
-✅ 8. Tabel tonen met trades
+# ✅ 8. Tabel tonen met trades
 
 if trades: df_trades = pd.DataFrame(trades)
 
