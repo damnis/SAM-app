@@ -100,11 +100,13 @@ def determine_advice(df, threshold):
     df["Trend"] = df["SAM"].rolling(window=3).mean()
     df["TrendChange"] = df["Trend"] - df["Trend"].shift(1)
 
-    df["Advies"] = np.where(
-    df["TrendChange"] > threshold, "Kopen",
-    np.where(df["TrendChange"] < -threshold, "Verkopen", np.nan)
-    )
-    
+    #df["Advies"] = np.where(
+    #df["TrendChange"] > threshold, "Kopen",
+   # np.where(df["TrendChange"] < -threshold, "Verkopen", np.nan)
+   # )
+    df["Advies"] = None
+    df.loc[df["TrendChange"] > threshold, "Advies"] = "Kopen"
+    df.loc[df["TrendChange"] < -threshold, "Advies"] = "Verkopen"
     #df["Advies"] = np.nan
    # df.loc[df["TrendChange"] > threshold, "Advies"] = "Kopen"
     #df.loc[df["TrendChange"] < -threshold, "Advies"] = "Verkopen"
