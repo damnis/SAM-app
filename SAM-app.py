@@ -98,28 +98,32 @@ def calculate_sam(df):
 def determine_advice(df, threshold):
     df = df.copy()
     df["Trend"] = df["SAM"].rolling(window=3).mean()
-    df["TrendChange"] = df["Trend"] - df["Trend"].shift(1)
+    df["TrendChange"] = df["Trend"].diff()
 
-    #df["Advies"] = np.where(
-    #df["TrendChange"] > threshold, "Kopen",
-   # np.where(df["TrendChange"] < -threshold, "Verkopen", np.nan)
-   # )
+    # Alleen nieuwe signalen op het exacte wisselpunt
     df["Advies"] = None
     df.loc[df["TrendChange"] > threshold, "Advies"] = "Kopen"
     df.loc[df["TrendChange"] < -threshold, "Advies"] = "Verkopen"
-    #df["Advies"] = np.nan
-   # df.loc[df["TrendChange"] > threshold, "Advies"] = "Kopen"
-    #df.loc[df["TrendChange"] < -threshold, "Advies"] = "Verkopen"
-   # df["Advies"] = df["Advies"].ffill()
 
+    # Signalen forward fillen alleen vanaf het signaalmoment
+    df["SignaalDatum"] = df["Advies"].notna().cumsum()
+    df["Advies"] = df.groupby("SignaalDatum")["Advies"].ffill()
+
+    # Herken aparte adviesgroepen
     df["AdviesGroep"] = (df["Advies"] != df["Advies"].shift()).cumsum()
+
     rendementen = []
     sam_rendementen = []
 
     for _, groep in df.groupby("AdviesGroep"):
+        advies = groep["Advies"].iloc[0]
+        if pd.isna(advies):
+            rendementen.extend([np.nan] * len(groep))
+            sam_rendementen.extend([np.nan] * len(groep))
+            continue
+
         start = groep["Close"].iloc[0]
         eind = groep["Close"].iloc[-1]
-        advies = groep["Advies"].iloc[0]
 
         markt_rendement = (eind - start) / start
         sam_rendement = markt_rendement if advies == "Kopen" else -markt_rendement
@@ -131,7 +135,7 @@ def determine_advice(df, threshold):
     df["SAM-%"] = sam_rendementen
 
     # Huidig advies bepalen
-    if "Advies" in df.columns and df["Advies"].notna().any():
+    if df["Advies"].notna().any():
         huidig_advies = df["Advies"].dropna().iloc[-1]
     else:
         huidig_advies = "Niet beschikbaar"
