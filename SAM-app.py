@@ -564,6 +564,7 @@ def bereken_sam_rendement(df_signalen, signaal_type="Beide", close_col="Close"):
                     entry_type = entry_price = entry_date = None
 
     # 🔚 Sluit eventuele open trade aan einde periode
+
 if entry_type is not None and entry_price is not None and entry_date is not None:
     sluit_datum = df_signalen.index[-1]
     sluit_close = df_signalen[close_col].iloc[-1]
@@ -586,7 +587,7 @@ if entry_type is not None and entry_price is not None and entry_date is not None
     })
 
 sam_rendement = sum(rendementen) if rendementen else 0.0
-return sam_rendement, trades, rendementen
+    return sam_rendement, trades, rendementen
 
 # ✅ 4. Berekening
 sam_rendement, trades, rendementen = bereken_sam_rendement(df_signalen, signaalkeuze, close_col)
