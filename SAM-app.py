@@ -100,10 +100,15 @@ def determine_advice(df, threshold):
     df["Trend"] = df["SAM"].rolling(window=3).mean()
     df["TrendChange"] = df["Trend"] - df["Trend"].shift(1)
 
-    df["Advies"] = np.nan
-    df.loc[df["TrendChange"] > threshold, "Advies"] = "Kopen"
-    df.loc[df["TrendChange"] < -threshold, "Advies"] = "Verkopen"
-    df["Advies"] = df["Advies"].ffill()
+    df["Advies"] = np.where(
+    df["TrendChange"] > threshold, "Kopen",
+    np.where(df["TrendChange"] < -threshold, "Verkopen", np.nan)
+    )
+    
+    #df["Advies"] = np.nan
+   # df.loc[df["TrendChange"] > threshold, "Advies"] = "Kopen"
+    #df.loc[df["TrendChange"] < -threshold, "Advies"] = "Verkopen"
+   # df["Advies"] = df["Advies"].ffill()
 
     df["AdviesGroep"] = (df["Advies"] != df["Advies"].shift()).cumsum()
     rendementen = []
