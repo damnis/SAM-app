@@ -345,7 +345,7 @@ st.markdown(
 #st.markdown(
     f"""
     <h3>SAM-indicator en trend voor <span style='color:#3366cc'>{ticker_name}</span></h3>
-    <h2 style='color:{advies_kleur}'>Huidig advies: {determine_advice}</h2>
+    <h2 style='color:{advies_kleur}'>Huidig advies: {huidig_advies}</h2>
     """,
     unsafe_allow_html=True
 )
