@@ -470,47 +470,37 @@ df.index = pd.to_datetime(df.index)
 # 🗓️ 1. Datumkeuze
 st.subheader("Vergelijk Marktrendement en SAM-rendement")
 
-# ⏱️ Aangepaste startdatum = 1 januari huidig jaar
 current_year = date.today().year
 default_start = date(current_year, 1, 1)
-
-# Laatste datum uit dataset
 default_end = df.index.max().date()
 
 start_date = st.date_input("Startdatum analyse", default_start)
 end_date = st.date_input("Einddatum analyse", default_end)
 
-# 🎯 2. Signaalkeuze geforceerd op Beide
+# 🎯 2. Signaalkeuze (alleen 'Beide' toegestaan)
 signaalkeuze = "Beide"
 
 # 📅 3. Filter op geselecteerde periode
-df_period = df.loc[
-    (df.index.date >= start_date) & (df.index.date <= end_date)
-].copy()
+df_period = df.loc[(df.index.date >= start_date) & (df.index.date <= end_date)].copy()
 
-# 🧹 Flat multi-index kolommen (indien nodig)
+# 🧹 Flatten MultiIndex (indien nodig)
 if isinstance(df_period.columns, pd.MultiIndex):
-    df_period.columns = [
-        "_".join([str(i) for i in col if i]) for col in df_period.columns
-    ]
+    df_period.columns = ["_".join(filter(None, map(str, col))) for col in df_period.columns]
 
-# 🔍 Zoek de juiste 'Close'-kolom
-close_col = next(
-    (col for col in df_period.columns if col.lower().startswith("close")), None
-)
+# 🔍 Vind 'Close'-kolom
+close_col = next((col for col in df_period.columns if col.lower().startswith("close")), None)
 
-# 💾 Verwerk 'Close'-data
+# 💾 Valideer Close-data
 df_valid = pd.Series([], dtype=float)
-
 if close_col:
     df_period[close_col] = pd.to_numeric(df_period[close_col], errors="coerce")
     df_valid = df_period[close_col].dropna()
     df_period = df_period.dropna(subset=[close_col])
 else:
-    st.warning("Geen geldige 'Close'-kolom gevonden in de data.")
+    st.warning("Geen geldige 'Close'-kolom gevonden.")
     df_period = pd.DataFrame(columns=df.columns)
 
-# 📈 4. Marktrendement berekenen (Buy & Hold)
+# 📈 4. Marktrendement (Buy & Hold)
 marktrendement = None
 if not df_valid.empty and len(df_valid) >= 2:
     koers_start = df_valid.iloc[0]
@@ -518,100 +508,105 @@ if not df_valid.empty and len(df_valid) >= 2:
     if koers_start != 0.0:
         marktrendement = ((koers_eind - koers_start) / koers_start) * 100
 
-# ✅ 5. Filter alleen geldige koop/verkoop signalen
+# ✅ 5. Signalen filteren
 advies_col = "Advies"
 df_signalen = df_period[df_period[advies_col].isin(["Kopen", "Verkopen"])].copy()
 
-# 📊 6. SAM-berekening (sluit trade op laatste signaalkoers)
-def bereken_sam_rendement(df_signalen, signaal_type="Beide"): rendementen = [] trades = [] entry_price = None entry_date = None entry_type = None
+# 📊 6. SAM-rendement berekening
+def bereken_sam_rendement(df_signalen, signaal_type="Beide"):
+    rendementen = []
+    trades = []
+    entry_price = None
+    entry_date = None
+    entry_type = None
 
-type_map = {"Koop": "Kopen", "Verkoop": "Verkopen", "Beide": "Beide"}
-mapped_type = type_map.get(signaal_type, "Beide")
+    type_map = {"Koop": "Kopen", "Verkoop": "Verkopen", "Beide": "Beide"}
+    mapped_type = type_map.get(signaal_type, "Beide")
 
-for datum, row in df_signalen.iterrows():
-    advies = row["Advies"]
-    close = row["Close"]
+    for datum, row in df_signalen.iterrows():
+        advies = row["Advies"]
+        close = row["Close"]
 
-    if entry_type is None:
-        if mapped_type == "Beide" or advies == mapped_type:
-            entry_type = advies
-            entry_price = close
-            entry_date = datum
-    else:
-        if advies != entry_type and (mapped_type == "Beide" or entry_type == mapped_type):
-            # Sluit trade op de close van het NIEUWE signaal
-            sluit_datum = datum
-            sluit_close = close
-
-            if entry_type == "Kopen":
-                rendement = (sluit_close - entry_price) / entry_price * 100
-            else:
-                rendement = (entry_price - sluit_close) / entry_price * 100
-
-            rendementen.append(rendement)
-            trades.append({
-                "Type": entry_type,
-                "Open datum": entry_date.strftime("%d-%m-%Y"),
-                "Open prijs": round(entry_price, 2),
-                "Sluit datum": sluit_datum.strftime("%d-%m-%Y"),
-                "Sluit prijs": round(sluit_close, 2),
-                "Rendement (%)": round(rendement, 2)
-            })
-
+        if entry_type is None:
             if mapped_type == "Beide" or advies == mapped_type:
                 entry_type = advies
                 entry_price = close
                 entry_date = datum
-            else:
-                entry_type = None
-                entry_price = None
-                entry_date = None
+        else:
+            if advies != entry_type and (mapped_type == "Beide" or entry_type == mapped_type):
+                sluit_datum = datum
+                sluit_close = close
 
-sam_rendement = sum(rendementen) if rendementen else 0.0
-return sam_rendement, trades, rendementen
+                rendement = ((sluit_close - entry_price) / entry_price * 100
+                             if entry_type == "Kopen"
+                             else (entry_price - sluit_close) / entry_price * 100)
 
-#✅ Bereken SAM-rendement
+                trades.append({
+                    "Type": entry_type,
+                    "Open datum": entry_date.strftime("%d-%m-%Y"),
+                    "Open prijs": round(entry_price, 2),
+                    "Sluit datum": sluit_datum.strftime("%d-%m-%Y"),
+                    "Sluit prijs": round(sluit_close, 2),
+                    "Rendement (%)": round(rendement, 2)
+                })
+                rendementen.append(rendement)
 
+                if mapped_type == "Beide" or advies == mapped_type:
+                    entry_type = advies
+                    entry_price = close
+                    entry_date = datum
+                else:
+                    entry_type = entry_price = entry_date = None
+
+    sam_rendement = sum(rendementen) if rendementen else 0.0
+    return sam_rendement, trades, rendementen
+
+# ✅ 7. SAM-rendement uitvoeren
 sam_rendement, trades, rendementen = bereken_sam_rendement(df_signalen, signaalkeuze)
 
-#✅ 7. Resultaten
-
+# ✅ 8. Resultaten tonen
 col1, col2 = st.columns(2)
 
-if isinstance(marktrendement, (int, float)): col1.metric("Marktrendement (Buy & Hold)", f"{marktrendement:+.2f}%") else: col1.metric("Marktrendement (Buy & Hold)", "n.v.t.")
+col1.metric("Marktrendement (Buy & Hold)",
+            f"{marktrendement:+.2f}%" if isinstance(marktrendement, (int, float)) else "n.v.t.")
+col2.metric("📊 SAM-rendement",
+            f"{sam_rendement:+.2f}%" if isinstance(sam_rendement, (int, float)) else "n.v.t.")
 
-if isinstance(sam_rendement, (int, float)): col2.metric("📊 SAM-rendement", f"{sam_rendement:+.2f}%") st.caption(f"Aantal afgeronde trades: {len(trades)} binnen deze periode.") else: col2.metric("📊 SAM-rendement", "n.v.t.")
+if isinstance(sam_rendement, (int, float)):
+    st.caption(f"Aantal afgeronde trades: **{len(trades)}** binnen deze periode.")
 
-# ✅ 8. Tabel tonen met trades
+# ✅ 9. Trades-tabel tonen
+if trades:
+    df_trades = pd.DataFrame(trades)
+    df_trades["SAM-% Koop"] = df_trades.apply(
+        lambda row: row["Rendement (%)"] if row["Type"] == "Kopen" else None, axis=1)
+    df_trades["SAM-% Verkoop"] = df_trades.apply(
+        lambda row: row["Rendement (%)"] if row["Type"] == "Verkopen" else None, axis=1)
+    df_trades["Markt-%"] = df_trades.apply(
+        lambda row: ((row["Sluit prijs"] - row["Open prijs"]) / row["Open prijs"]) * 100, axis=1)
 
-if trades: df_trades = pd.DataFrame(trades)
+    df_trades = df_trades.rename(columns={"Rendement (%)": "SAM-% tot."})
+    df_trades = df_trades[
+        ["Open datum", "Open prijs", "Sluit datum", "Sluit prijs",
+         "Markt-%", "SAM-% tot.", "SAM-% Koop", "SAM-% Verkoop"]
+    ]
 
-# Voeg kolommen toe
-df_trades["SAM-% Koop"] = df_trades.apply(
-    lambda row: row["Rendement (%)"] if row["Type"] == "Kopen" else None, axis=1
-)
-df_trades["SAM-% Verkoop"] = df_trades.apply(
-    lambda row: row["Rendement (%)"] if row["Type"] == "Verkopen" else None, axis=1
-)
-df_trades["Markt-%"] = df_trades.apply(
-    lambda row: ((row["Sluit prijs"] - row["Open prijs"]) / row["Open prijs"]) * 100,
-    axis=1
-)
+    toon_alle = st.toggle("Toon alle trades", value=False)
+    st.dataframe(df_trades if toon_alle or len(df_trades) <= 12 else df_trades.tail(12),
+                 use_container_width=True)
 
-# Hernoem kolom
-df_trades = df_trades.rename(columns={"Rendement (%)": "SAM-% tot."})
 
-# Selecteer en orden kolommen
-df_trades = df_trades[
-    ["Open datum", "Open prijs", "Sluit datum", "Sluit prijs",
-     "Markt-%", "SAM-% tot.", "SAM-% Koop", "SAM-% Verkoop"]
-]
 
-# Toggle voor volledige lijst of laatste 12
-toon_alle = st.toggle("Toon alle trades", value=False)
 
-if toon_alle or len(df_trades) <= 12:
-    st.dataframe(df_trades, use_container_width=True)
-else:
-    st.dataframe(df_trades.tail(12), use_container_width=True)
+
+
+
+
+
+
+
+
+
+# wit
+
 
