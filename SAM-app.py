@@ -571,31 +571,54 @@ def bereken_sam_rendement(df_signalen, signaal_type="Beide"):
                     entry_price = close
                     entry_date = datum
                 else:
+def bereken_sam_rendement(df_signalen, signaal_type="Beide"):
+    rendementen = []
+    trades = []
+    entry_price = None
+    entry_date = None
+    entry_type = None
+
+    type_map = {"Koop": "Kopen", "Verkoop": "Verkopen", "Beide": "Beide"}
+    mapped_type = type_map.get(signaal_type, "Beide")
+
+    for datum, row in df_signalen.iterrows():
+        advies = row["Advies"]
+        close = row["Close"]
+
+        if entry_type is None:
+            if mapped_type == "Beide" or advies == mapped_type:
+                entry_type = advies
+                entry_price = close
+                entry_date = datum
+        else:
+            if advies != entry_type and (mapped_type == "Beide" or entry_type == mapped_type):
+                # Sluit trade op de close van het NIEUWE signaal
+                sluit_datum = datum
+                sluit_close = close
+
+                if entry_type == "Kopen":
+                    rendement = (sluit_close - entry_price) / entry_price * 100
+                else:
+                    rendement = (entry_price - sluit_close) / entry_price * 100
+
+                rendementen.append(rendement)
+                trades.append({
+                    "Type": entry_type,
+                    "Open datum": entry_date.strftime("%d-%m-%Y"),
+                    "Open prijs": round(entry_price, 2),
+                    "Sluit datum": sluit_datum.strftime("%d-%m-%Y"),
+                    "Sluit prijs": round(sluit_close, 2),
+                    "Rendement (%)": round(rendement, 2)
+                })
+
+                if mapped_type == "Beide" or advies == mapped_type:
+                    entry_type = advies
+                    entry_price = close
+                    entry_date = datum
+                else:
                     entry_type = None
                     entry_price = None
                     entry_date = None
-
-        vorige_rij = row  # Update vorige rij
-
-    # ✅ Sluit openstaande trade op laatste koers
-    if entry_type is not None and entry_price is not None and vorige_rij is not None:
-        laatste_datum = vorige_rij.name
-        laatste_koers = vorige_rij[close_col]
-
-        if entry_type == "Kopen":
-            rendement = (laatste_koers - entry_price) / entry_price * 100
-        else:
-            rendement = (entry_price - laatste_koers) / entry_price * 100
-
-        rendementen.append(rendement)
-        trades.append({
-            "Type": entry_type,
-            "Open datum": entry_date.strftime("%d-%m-%Y"),
-            "Open prijs": round(entry_price, 2),
-            "Sluit datum": laatste_datum.strftime("%d-%m-%Y"),
-            "Sluit prijs": round(laatste_koers, 2),
-            "Rendement (%)": round(rendement, 2)
-        })
 
     sam_rendement = sum(rendementen) if rendementen else 0.0
     return sam_rendement, trades, rendementen
@@ -651,6 +674,11 @@ if trades:
         st.dataframe(df_trades.tail(12), use_container_width=True)
 
 
+
+
+
+
+# wit
 
 
 
