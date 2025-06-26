@@ -332,7 +332,7 @@ df = calculate_sam(df)
 # huidig_advies = df["Advies"].dropna().iloc[-1]
 
 # Kleur bepalen op basis van advies
-advies_kleur = "green" if huidig_advies == "Kopen" else "red" if huidig_advies == "Verkopen" else "gray"
+advies_kleur = "green" if determine_advice == "Kopen" else "red" if determine_advice == "Verkopen" else "gray"
 
 # Titel met kleur en grootte tonen
 st.markdown(
