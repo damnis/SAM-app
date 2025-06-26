@@ -570,11 +570,11 @@ for datum, row in df_signalen.iterrows():
 sam_rendement = sum(rendementen) if rendementen else 0.0
 return sam_rendement, trades, rendementen
 
-✅ Bereken SAM-rendement
+#✅ Bereken SAM-rendement
 
 sam_rendement, trades, rendementen = bereken_sam_rendement(df_signalen, signaalkeuze)
 
-✅ 7. Resultaten
+#✅ 7. Resultaten
 
 col1, col2 = st.columns(2)
 
