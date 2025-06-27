@@ -111,7 +111,7 @@ def calculate_sam(df):
 # --- Advies en rendementen ---
 def determine_advice(df, threshold):
     df = df.copy()
-    df["Trend"] = df["SAM"].rolling(window=25).mean()
+    df["Trend"] = df["SAM"].rolling(window=12).mean() # cruciaal oorspronkelijk 3, maar sam 12
     df["TrendChange"] = df["Trend"] - df["Trend"].shift(1)
 
     df["Advies"] = np.nan
