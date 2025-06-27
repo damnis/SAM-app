@@ -75,26 +75,25 @@ def calculate_sam(df):
     # WMA's
     from ta.trend import WMAIndicator
 
-    wma_18 = WMAIndicator(close=df["Close"], window=18).wma()
-    wma_35 = WMAIndicator(close=df["Close"], window=35).wma()
-    # Vorige WMA18 voor kleine bewegingen
-    wma_18_prev = wma_18.shift(1)
-    wma_35_prev = wma_35.shift(1)
+    # Bereken WMA18 en WMA35
+    wma_18 = pd.Series(WMAIndicator(df["Close"], window=18).wma().values.flatten(), index=df.index)
+    wma_35 = pd.Series(WMAIndicator(df["Close"], window=35).wma().values.flatten(), index=df.index)
 
+    # Bereken verschuiving
+     wma_18_shifted = wma_18.shift(1)
+
+    # Kruisingen detecteren
+    crossover_up = (wma_18_shifted < wma_35.shift(1)) & (wma_18 > wma_35)
+    crossover_down = (wma_18_shifted > wma_35.shift(1)) & (wma_18 < wma_35)
+
+    # Bereken SAMG op basis van regels
     df["SAMG"] = 0.0
-
-    # Crossover omhoog: WMA18 kruist boven WMA35 → +1.0
-    df.loc[(wma_18_prev < wma_35_prev) & (wma_18 > wma_35), "SAMG"] = 1.0
-
-    # Crossover omlaag: WMA18 kruist onder WMA35 → -1.0
-    df.loc[(wma_18_prev > wma_35_prev) & (wma_18 < wma_35), "SAMG"] = -1.0
-
-    # Kleine opwaartse beweging boven vorige → +0.5 of -0.5
-    df.loc[(wma_18 > wma_18_prev * 1.0015) & (wma_18 > wma_18_prev), "SAMG"] = 0.5
-    df.loc[(wma_18 < wma_18_prev * 1.0015) & (wma_18 > wma_18_prev), "SAMG"] = -0.5
-    df.loc[(wma_18 > wma_18_prev / 1.0015) & (wma_18 <= wma_18_prev), "SAMG"] = 0.5
-    df.loc[(wma_18 < wma_18_prev / 1.0015) & (wma_18 <= wma_18_prev), "SAMG"] = -0.5
-
+    df.loc[crossover_up, "SAMG"] = 1.0
+    df.loc[crossover_down, "SAMG"] = -1.0
+    df.loc[(wma_18 > wma_18_shifted * 1.0015) & (wma_18 > wma_18_shifted), "SAMG"] = 0.5
+    df.loc[(wma_18 < wma_18_shifted * 1.0015) & (wma_18 > wma_18_shifted), "SAMG"] = -0.5
+    df.loc[(wma_18 > wma_18_shifted / 1.0015) & (wma_18 <= wma_18_shifted), "SAMG"] = 0.5
+    df.loc[(wma_18 < wma_18_shifted / 1.0015) & (wma_18 <= wma_18_shifted), "SAMG"] = -0.5
 # Rest blijft 0.0 (default)
 
 #  samg oud
