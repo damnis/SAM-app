@@ -104,53 +104,88 @@ def determine_advice(df, threshold):
     df.loc[df["TrendChange"] > threshold, "Advies"] = "Kopen"
     df.loc[df["TrendChange"] < -threshold, "Advies"] = "Verkopen"
 
-    rendementen = []
-    sam_rendementen = []
-    vorige_advies = None
-    entry_price = None
-    entry_index = None
+    df["AdviesGroep"] = (df["Advies"] != df["Advies"].shift()).cumsum()
 
-    markt_rendement_list = []
-    sam_rendement_list = []
+    trades = []
+    rendementen = []
+
+    entry_type = None
+    entry_price = None
+    entry_date = None
 
     for idx, row in df.iterrows():
         advies = row["Advies"]
         close = row["Close"]
 
-    if not isinstance(advies, str):
-        markt_rendement_list.append(np.nan)
-        sam_rendement_list.append(np.nan)
-        continue
+        if not isinstance(advies, str):
+            continue
 
-    # Start nieuwe trade
-    if vorige_advies is None and advies in ["Kopen", "Verkopen"]:
-        vorige_advies = advies
-        entry_price = close
-        entry_index = idx
+        # Start trade bij eerste signaal
+        if entry_type is None:
+            entry_type = advies
+            entry_price = close
+            entry_date = idx
+            continue
 
-    # Tegenadvies: sluit huidige trade
-    elif vorige_advies and advies != vorige_advies:
-        rendement = (close - entry_price) / entry_price if vorige_advies == "Kopen" else (entry_price - close) / entry_price
-        markt_rendement = rendement
-        sam_rendement = rendement if vorige_advies == "Kopen" else -rendement
+        # Sluit trade bij nieuw signaal
+        if advies != entry_type:
+            sluit_type = entry_type
+            sluit_price = close
+            sluit_date = idx
 
-        n = df.index.get_loc(idx) - df.index.get_loc(entry_index)
-        markt_rendement_list.extend([markt_rendement] * n)
-        sam_rendement_list.extend([sam_rendement] * n)
+            if sluit_type == "Kopen":
+                rendement = (sluit_price - entry_price) / entry_price * 100
+            else:
+                rendement = (entry_price - sluit_price) / entry_price * 100
 
-        vorige_advies = advies
-        entry_price = close
-        entry_index = idx
+            rendementen.append(rendement)
+            trades.append({
+                "Type": sluit_type,
+                "Open datum": entry_date.strftime("%d-%m-%Y"),
+                "Open prijs": round(entry_price, 2),
+                "Sluit datum": sluit_date.strftime("%d-%m-%Y"),
+                "Sluit prijs": round(sluit_price, 2),
+                "Rendement (%)": round(rendement, 2)
+            })
 
-    else:
-        markt_rendement_list.append(np.nan)
-        sam_rendement_list.append(np.nan)
+            # Open eventueel een nieuwe trade op dit advies
+            entry_type = advies
+            entry_price = close
+            entry_date = idx
 
-    df["Markt-%"] = markt_rendement_list
-    df["SAM-%"] = sam_rendement_list
+    # Sluit laatste actieve trade op laatste datum (force close)
+    if entry_type is not None:
+        sluit_price = df["Close"].iloc[-1]
+        sluit_date = df.index[-1]
+
+        if entry_type == "Kopen":
+            rendement = (sluit_price - entry_price) / entry_price * 100
+        else:
+            rendement = (entry_price - sluit_price) / entry_price * 100
+
+        rendementen.append(rendement)
+        trades.append({
+            "Type": entry_type,
+            "Open datum": entry_date.strftime("%d-%m-%Y"),
+            "Open prijs": round(entry_price, 2),
+            "Sluit datum": sluit_date.strftime("%d-%m-%Y"),
+            "Sluit prijs": round(sluit_price, 2),
+            "Rendement (%)": round(rendement, 2)
+        })
+
+    df["Markt-%"] = 0.0
+    df["SAM-%"] = 0.0
+
+    for trade in trades:
+        mask = (df.index >= pd.to_datetime(trade["Open datum"], dayfirst=True)) & (
+            df.index <= pd.to_datetime(trade["Sluit datum"], dayfirst=True)
+        )
+        markt_rendement = ((trade["Sluit prijs"] - trade["Open prijs"]) / trade["Open prijs"]) * 100
+        sam_rendement = trade["Rendement (%)"]
+        df.loc[mask, "Markt-%"] = markt_rendement
+        df.loc[mask, "SAM-%"] = sam_rendement
 
     huidig_advies = df["Advies"].dropna().iloc[-1] if df["Advies"].notna().any() else "Niet beschikbaar"
-
     return df, huidig_advies
     
 # --- Streamlit UI ---
