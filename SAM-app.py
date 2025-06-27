@@ -126,9 +126,9 @@ def determine_advice(df, threshold):
     groepen = list(df.groupby("AdviesGroep"))
 
     for i in range(len(groepen)):
-    _, groep = groepen[i]
-    advies = groep["Advies"].iloc[0]
-    start = float(groep["Close"].iloc[0])
+        _, groep = groepen[i]
+        advies = groep["Advies"].iloc[0]
+        start = float(groep["Close"].iloc[0])
 
     if i < len(groepen) - 1:
         volgende_groep = groepen[i + 1][1]
