@@ -116,22 +116,20 @@ def determine_advice(df, threshold):
         close = row["Close"]
 
         if vorige_advies is None and isinstance(advies, str) and advies in ["Kopen", "Verkopen"]:
-        #if vorige_advies is None and advies in ["Kopen", "Verkopen"]:
             # Eerste geldige signaal
             vorige_advies = advies
             entry_price = close
             entry_date = datum
 
         elif isinstance(advies, str) and advies in ["Kopen", "Verkopen"] and advies != vorige_advies:
-        #elif advies is not None and advies != vorige_advies:
-            # Nieuw advies = sluit trade
+            # Sluit trade bij nieuw signaal
             sluit_price = close
             sluit_datum = datum
 
             if vorige_advies == "Kopen":
-                rendement = (sluit_price - entry_price) / entry_price * 100
+                rendement = (sluit_price - entry_price) / entry_price
             else:
-                rendement = (entry_price - sluit_price) / entry_price * 100
+                rendement = (entry_price - sluit_price) / entry_price
 
             rendementen.append(rendement)
             trades.append({
@@ -140,22 +138,23 @@ def determine_advice(df, threshold):
                 "Open prijs": round(entry_price, 2),
                 "Sluit datum": sluit_datum.date(),
                 "Sluit prijs": round(sluit_price, 2),
-                "Rendement (%)": round(rendement, 2)
+                "Rendement (%)": round(rendement * 100, 2)
             })
 
-            # Start nieuwe trade
+            # Nieuwe trade openen
             vorige_advies = advies
             entry_price = close
             entry_date = datum
 
-    # Sluit openstaande trade geforceerd op einde
-    if entry_price is not None and entry_date is not None and vorige_advies is not None:
+    # Sluit open trade op einde
+    if vorige_advies is not None and entry_price is not None and entry_date is not None:
         sluit_price = df["Close"].iloc[-1]
         sluit_datum = df.index[-1]
+
         if vorige_advies == "Kopen":
-            rendement = (sluit_price - entry_price) / entry_price * 100
+            rendement = (sluit_price - entry_price) / entry_price
         else:
-            rendement = (entry_price - sluit_price) / entry_price * 100
+            rendement = (entry_price - sluit_price) / entry_price
 
         rendementen.append(rendement)
         trades.append({
@@ -164,16 +163,17 @@ def determine_advice(df, threshold):
             "Open prijs": round(entry_price, 2),
             "Sluit datum": sluit_datum.date(),
             "Sluit prijs": round(sluit_price, 2),
-            "Rendement (%)": round(rendement, 2)
+            "Rendement (%)": round(rendement * 100, 2)
         })
 
-    # Resultaatkolommen vullen (optioneel visueel)
+    # Vul kolommen in dataframe
     df["Markt-%"] = 0.0
     df["SAM-%"] = 0.0
+
     for trade in trades:
         mask = (df.index.date >= trade["Open datum"]) & (df.index.date <= trade["Sluit datum"])
-        markt_rendement = ((trade["Sluit prijs"] - trade["Open prijs"]) / trade["Open prijs"]) * 100
-        sam_rendement = trade["Rendement (%)"]
+        markt_rendement = (trade["Sluit prijs"] - trade["Open prijs"]) / trade["Open prijs"]
+        sam_rendement = trade["Rendement (%)"] / 100
         df.loc[mask, "Markt-%"] = markt_rendement
         df.loc[mask, "SAM-%"] = sam_rendement
 
