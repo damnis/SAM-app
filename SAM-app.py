@@ -71,11 +71,36 @@ def calculate_sam(df):
     df.loc[(df["c1"] & df["c2"] & df["c3"] & df["c4"]).fillna(False), "SAMK"] = 1.25
     df.loc[(df["c1"] & df["c6"] & df["c7"]).fillna(False), "SAMK"] = -1
 
-    # SAMG
-    df["Change"] = df["Close"].pct_change()
-    df["SAMG"] = 0
-    df.loc[df["Change"] > 0.03, "SAMG"] = 1
-    df.loc[df["Change"] < -0.03, "SAMG"] = -1
+    # --- SAMG op basis van Weighted Moving Averages + Crossovers ---
+    # WMA's
+    wma_18 = ta.trend.wma_indicator(df["Close"], window=18)
+    wma_35 = ta.trend.wma_indicator(df["Close"], window=35)
+
+    # Vorige WMA18 voor kleine bewegingen
+    wma_18_prev = wma_18.shift(1)
+    wma_35_prev = wma_35.shift(1)
+
+    df["SAMG"] = 0.0
+
+    # Crossover omhoog: WMA18 kruist boven WMA35 → +1.0
+    df.loc[(wma_18_prev < wma_35_prev) & (wma_18 > wma_35), "SAMG"] = 1.0
+
+    # Crossover omlaag: WMA18 kruist onder WMA35 → -1.0
+    df.loc[(wma_18_prev > wma_35_prev) & (wma_18 < wma_35), "SAMG"] = -1.0
+
+    # Kleine opwaartse beweging boven vorige → +0.5 of -0.5
+    df.loc[(wma_18 > wma_18_prev * 1.0015) & (wma_18 > wma_18_prev), "SAMG"] = 0.5
+    df.loc[(wma_18 < wma_18_prev * 1.0015) & (wma_18 > wma_18_prev), "SAMG"] = -0.5
+    df.loc[(wma_18 > wma_18_prev / 1.0015) & (wma_18 <= wma_18_prev), "SAMG"] = 0.5
+    df.loc[(wma_18 < wma_18_prev / 1.0015) & (wma_18 <= wma_18_prev), "SAMG"] = -0.5
+
+# Rest blijft 0.0 (default)
+
+#  samg oud
+#    df["Change"] = df["Close"].pct_change()
+#    df["SAMG"] = 0
+#    df.loc[df["Change"] > 0.03, "SAMG"] = 1
+#    df.loc[df["Change"] < -0.03, "SAMG"] = -1
 
     # SAMT
     df["SMA5"] = df["Close"].rolling(window=5).mean()
