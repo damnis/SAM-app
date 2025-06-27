@@ -147,24 +147,24 @@ def determine_advice(df, threshold):
             entry_date = datum
 
     # Sluit open trade op einde
-    if vorige_advies is not None and entry_price is not None and entry_date is not None:
-        sluit_price = df["Close"].iloc[-1]
-        sluit_datum = df.index[-1]
+  #  if vorige_advies is not None and entry_price is not None and entry_date is not None:
+  #      sluit_price = df["Close"].iloc[-1]
+  #      sluit_datum = df.index[-1]
 
-        if vorige_advies == "Kopen":
-            rendement = (sluit_price - entry_price) / entry_price
-        else:
-            rendement = (entry_price - sluit_price) / entry_price
+   #     if vorige_advies == "Kopen":
+  #          rendement = (sluit_price - entry_price) / entry_price
+  #      else:
+   #         rendement = (entry_price - sluit_price) / entry_price
 
-        rendementen.append(rendement)
-        trades.append({
-            "Type": vorige_advies,
-            "Open datum": entry_date.date(),
-            "Open prijs": round(entry_price, 2),
-            "Sluit datum": sluit_datum.date(),
-            "Sluit prijs": round(sluit_price, 2),
-            "Rendement (%)": round(rendement * 100, 2)
-        })
+   #     rendementen.append(rendement)
+   #     trades.append({
+   #         "Type": vorige_advies,
+   #         "Open datum": entry_date.date(),
+  #          "Open prijs": round(entry_price, 2),
+   #         "Sluit datum": sluit_datum.date(),
+  #          "Sluit prijs": round(sluit_price, 2),
+    #        "Rendement (%)": round(rendement * 100, 2)
+   #     })
 
     # Vul kolommen in dataframe
     df["Markt-%"] = 0.0
