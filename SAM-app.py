@@ -598,8 +598,18 @@ col1.metric("Marktrendement (Buy & Hold)", f"{marktrendement:+.2f}%" if marktren
 col2.metric("📊 SAM-rendement", f"{sam_rendement:+.2f}%" if isinstance(sam_rendement, (int, float)) else "n.v.t.")
 
 if trades:
-    st.caption(f"Aantal afgeronde trades: **{len(trades)}** binnen deze periode.")
+    # aantal trades
+    aantal_koop = sum(1 for t in trades if t["Type"] == "Kopen")
+aantal_verkoop = sum(1 for t in trades if t["Type"] == "Verkopen")
+st.caption(
+    f"Aantal afgeronde trades: **{len(trades)}** binnen deze periode  \n"
+    f"Aantal afgeronde **koop** trades: **{aantal_koop}**  \n"
+    f"Aantal afgeronde **verkoop** trades: **{aantal_verkoop}**"
+)
+   # st.caption(f"Aantal afgeronde trades: **{len(trades)}** binnen deze periode.")
 
+
+    # trades tabel
     df_trades = pd.DataFrame(trades)
 
     df_trades["SAM-% Koop"] = df_trades.apply(
