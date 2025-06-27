@@ -58,18 +58,40 @@ def calculate_sam(df):
     df = df.copy()
 
     # Basiskolommen
-    df["c1"] = df["Close"] > df["Open"]
-    df["c2"] = df["Close"].shift(1) > df["Open"].shift(1)
-    df["c3"] = df["Close"].shift(2) > df["Open"].shift(2)
-    df["c4"] = df["Close"].shift(3) > df["Open"].shift(3)
-    df["c5"] = df["Close"].shift(4) > df["Open"].shift(4)
-    df["c6"] = df["Close"].shift(1) < df["Open"].shift(1)
-    df["c7"] = df["Close"].shift(2) < df["Open"].shift(2)
+    # SAMK (Kandelaarsignalen)
+    df["SAMK"] = 0.0
 
-    # SAMK
-    df["SAMK"] = 0
-    df.loc[(df["c1"] & df["c2"] & df["c3"] & df["c4"]).fillna(False), "SAMK"] = 1.25
-    df.loc[(df["c1"] & df["c6"] & df["c7"]).fillna(False), "SAMK"] = -1
+    c1 = df["Close"] > df["Open"]
+    c2 = df["Close"].shift(1) > df["Open"].shift(1)
+    c3 = df["Close"] > df["Close"].shift(1)
+    c4 = df["Close"].shift(1) > df["Close"].shift(2)
+    c5 = df["Close"] < df["Open"]
+    c6 = df["Close"].shift(1) < df["Open"].shift(1)
+    c7 = df["Close"] < df["Close"].shift(1)
+    c8 = df["Close"].shift(1) < df["Close"].shift(2)
+
+    df.loc[c1 & c2 & c3 & c4, "SAMK"] = 1.25
+    df.loc[c1 & c3 & c4 & ~c2, "SAMK"] = 1.0
+    df.loc[c1 & c3 & ~c4 & ~c2, "SAMK"] = 0.5
+    df.loc[(c1 | c3) & ~c2 & ~c4, "SAMK"] = 0.25
+
+    df.loc[c5 & c6 & c7 & c8, "SAMK"] = -1.25
+    df.loc[c5 & c7 & c8 & ~c6, "SAMK"] = -1.0
+    df.loc[c5 & c7 & ~c8 & ~c6, "SAMK"] = -0.5
+    df.loc[(c5 | c7) & ~c6 & ~c8, "SAMK"] = -0.25
+    
+#    df["c1"] = df["Close"] > df["Open"]
+#    df["c2"] = df["Close"].shift(1) > df["Open"].shift(1)
+#    df["c3"] = df["Close"].shift(2) > df["Open"].shift(2)
+#    df["c4"] = df["Close"].shift(3) > df["Open"].shift(3)
+#    df["c5"] = df["Close"].shift(4) > df["Open"].shift(4)
+#    df["c6"] = df["Close"].shift(1) < df["Open"].shift(1)
+#    df["c7"] = df["Close"].shift(2) < df["Open"].shift(2)
+
+    # SAMK oud
+#    df["SAMK"] = 0
+#    df.loc[(df["c1"] & df["c2"] & df["c3"] & df["c4"]).fillna(False), "SAMK"] = 1.25
+ #   df.loc[(df["c1"] & df["c6"] & df["c7"]).fillna(False), "SAMK"] = -1
 
     # --- SAMG op basis van Weighted Moving Averages + Crossovers ---
     def weighted_moving_average(series, window):
