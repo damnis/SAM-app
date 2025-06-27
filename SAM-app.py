@@ -80,7 +80,7 @@ def calculate_sam(df):
     wma_35 = pd.Series(WMAIndicator(df["Close"], window=35).wma().values.flatten(), index=df.index)
 
     # Bereken verschuiving
-     wma_18_shifted = wma_18.shift(1)
+    wma_18_shifted = wma_18.shift(1)
 
     # Kruisingen detecteren
     crossover_up = (wma_18_shifted < wma_35.shift(1)) & (wma_18 > wma_35)
