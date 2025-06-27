@@ -1,6 +1,7 @@
 import streamlit as st
 import yfinance as yf
 import pandas as pd
+import ta
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -91,11 +92,36 @@ def calculate_sam(df):
     df.loc[df["daily_range"] < avg_range, "SAMD"] = -1
 
     # SAMM
-    df["SMA10"] = df["Close"].rolling(window=10).mean()
-    df["SMA50"] = df["Close"].rolling(window=50).mean()
-    df["SAMM"] = 0
-    df.loc[df["SMA10"] > df["SMA50"], "SAMM"] = 1
-    df.loc[df["SMA10"] < df["SMA50"], "SAMM"] = -1
+    df["SAMM"]
+    # Bereken MACD en signaallijn
+    macd = ta.trend.macd(df["Close"], window_slow=26, window_fast=12)
+    signal = ta.trend.macd_signal(df["Close"], window_slow=26, window_fast=12, window_sign=9)
+
+    df["MACD"] = macd
+    df["SIGNAL"] = signal
+
+    # Verschil voor kruising detectie
+    prev_macd = df["MACD"].shift(1)
+    prev_signal = df["SIGNAL"].shift(1)
+
+    # SAMM berekening
+    conditions = [
+        (prev_macd < prev_signal) & (df["MACD"] > df["SIGNAL"]),  # Crossover up
+        (df["MACD"] > df["SIGNAL"]),
+        (prev_macd > prev_signal) & (df["MACD"] < df["SIGNAL"]),  # Crossover down
+        (df["MACD"] <= df["SIGNAL"])
+    ]
+
+    keuzes = [1.0, 0.5, -1.0, -0.5]
+
+    df["SAMM"] = np.select(conditions, keuzes, default=0.0)
+
+    # samm oud   
+  #  df["SMA10"] = df["Close"].rolling(window=10).mean()
+  #  df["SMA50"] = df["Close"].rolling(window=50).mean()
+ #   df["SAMM"] = 0
+  #  df.loc[df["SMA10"] > df["SMA50"], "SAMM"] = 1
+ #   df.loc[df["SMA10"] < df["SMA50"], "SAMM"] = -1
 
     # SAMX
     df["Momentum"] = df["Close"] - df["Close"].shift(3)
