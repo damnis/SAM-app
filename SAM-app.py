@@ -668,20 +668,21 @@ col2.metric("📊 SAM-rendement", f"{sam_rendement:+.2f}%" if isinstance(sam_ren
 
 if trades:
     # ❌ Verwijder trades met NaN of ontbrekende info
-trades = [
-    t for t in trades
-    if all(k in t and pd.notna(t[k]) for k in ["Open prijs", "Sluit prijs", "Rendement (%)"])
-]
+    trades = [
+        t for t in trades
+        if all(k in t and pd.notna(t[k]) for k in ["Open prijs", "Sluit prijs", "Rendement (%)"])
+    ]
+
+    # ✅ Eventueel extra controle via functie
+    trades = filter_geldige_trades(trades)
+
+    if not trades:
+        st.warning("Er zijn geen geldige trades gevonden voor deze selectie.")
+        return
 
     # 🧮 DataFrame bouwen
-trades = filter_geldige_trades(trades)
-
-if not trades:
-    st.warning("Er zijn geen geldige trades gevonden voor deze selectie.")
-    return
-
-df_trades = pd.DataFrame(trades)
- 
+    df_trades = pd.DataFrame(trades)
+    
     # 📊 Extra kolommen toevoegen
     df_trades["SAM-% Koop"] = df_trades.apply(
         lambda row: row["Rendement (%)"] if row["Type"] == "Kopen" else None, axis=1
