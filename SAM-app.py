@@ -117,7 +117,7 @@ def determine_advice(df, threshold):
         start = groep["Close"].iloc[0]
 
         if i < len(groepen) - 1:
-            # Gebruik eerste koers van volgende groep
+            # Gebruik eerste koers van volgende groep, hier verkoop moment iloc [0]
             volgende_groep = groepen[i + 1][1]
             eind = volgende_groep["Close"].iloc[0]
         else:
