@@ -114,35 +114,37 @@ def determine_advice(df, threshold):
     sam_rendement_list = []
 
     for idx, row in df.iterrows():
-        advies = row["Advies"]
-        close = row["Close"]
+    advies = row["Advies"]
+    close = row["Close"]
 
-        # Start nieuwe trade
-        if vorige_advies is None and advies in ["Kopen", "Verkopen"]:
-            vorige_advies = advies
-            entry_price = close
-            entry_index = idx
+    if not isinstance(advies, str):
+        markt_rendement_list.append(np.nan)
+        sam_rendement_list.append(np.nan)
+        continue
 
-        # Tegenadvies: sluit huidige trade
-        elif vorige_advies and advies and advies != vorige_advies:
-            rendement = (close - entry_price) / entry_price if vorige_advies == "Kopen" else (entry_price - close) / entry_price
-            markt_rendement = rendement
-            sam_rendement = rendement if vorige_advies == "Kopen" else -rendement
+    # Start nieuwe trade
+    if vorige_advies is None and advies in ["Kopen", "Verkopen"]:
+        vorige_advies = advies
+        entry_price = close
+        entry_index = idx
 
-            for i in df.index.get_loc(entry_index), df.index.get_loc(idx) - 1:
-                markt_rendement_list.append(markt_rendement)
-                sam_rendement_list.append(sam_rendement)
+    # Tegenadvies: sluit huidige trade
+    elif vorige_advies and advies != vorige_advies:
+        rendement = (close - entry_price) / entry_price if vorige_advies == "Kopen" else (entry_price - close) / entry_price
+        markt_rendement = rendement
+        sam_rendement = rendement if vorige_advies == "Kopen" else -rendement
 
-            vorige_advies = advies
-            entry_price = close
-            entry_index = idx
+        n = df.index.get_loc(idx) - df.index.get_loc(entry_index)
+        markt_rendement_list.extend([markt_rendement] * n)
+        sam_rendement_list.extend([sam_rendement] * n)
 
-        elif vorige_advies:
-            markt_rendement_list.append(np.nan)
-            sam_rendement_list.append(np.nan)
-        else:
-            markt_rendement_list.append(np.nan)
-            sam_rendement_list.append(np.nan)
+        vorige_advies = advies
+        entry_price = close
+        entry_index = idx
+
+    else:
+        markt_rendement_list.append(np.nan)
+        sam_rendement_list.append(np.nan)
 
     df["Markt-%"] = markt_rendement_list
     df["SAM-%"] = sam_rendement_list
