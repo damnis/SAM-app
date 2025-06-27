@@ -37,6 +37,20 @@ def fetch_data(ticker, interval):
 
     return df
 
+from datetime import timedelta
+
+def bepaal_grafiekperiode(interval):
+    if interval == "15m":
+        return timedelta(days=7)
+    elif interval == "1h":
+        return timedelta(days=30)
+    elif interval == "4h":
+        return timedelta(days=60)
+    elif interval == "1d":
+        return timedelta(days=360)
+    else:
+        return timedelta(weeks=360)  # bijv. bij weekly/monthly data
+
     
 # --- SAM Indicatorberekeningen ---
 def calculate_sam(df):
@@ -360,10 +374,21 @@ import matplotlib.pyplot as plt
 import streamlit as st
 
 # --- Grafiek met SAM en Trend ---
+
+# Bepaal de weergaveperiode op basis van interval
+grafiek_periode = bepaal_grafiekperiode(interval)
+
+# Bepaal cutoff-datum
+cutoff_datum = df.index.max() - grafiek_periode
+
+# Filter alleen grafiekdata
+df_grafiek = df[df.index >= cutoff_datum].copy()
+
+# --- Grafiek met SAM en Trend ---
 fig, ax1 = plt.subplots(figsize=(10, 4))
-ax1.bar(df.index, df["SAM"], color="lightblue", label="SAM")
+ax1.bar(df_grafiek.index, df_grafiek["SAM"], color="lightblue", label="SAM")
 ax2 = ax1.twinx()
-ax2.plot(df.index, df["Trend"], color="red", label="Trend")
+ax2.plot(df_grafiek.index, df_grafiek["Trend"], color="red", label="Trend")
 ax1.set_ylabel("SAM")
 ax2.set_ylabel("Trend")
 fig.tight_layout()
