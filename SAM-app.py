@@ -70,14 +70,15 @@ def calculate_sam(df):
     c7 = df["Close"] < df["Close"].shift(1)
     c8 = df["Close"].shift(1) < df["Close"].shift(2)
 
-    df.loc[c1 & c2 & c3 & c4, "SAMK"] = 1.25
-    df.loc[c1 & c3 & c4 & ~c2, "SAMK"] = 1.0
-    df.loc[c1 & c3 & ~c4 & ~c2, "SAMK"] = 0.5
-    df.loc[(c1 | c3) & ~c2 & ~c4, "SAMK"] = 0.25
-    df.loc[c5 & c6 & c7 & c8, "SAMK"] = -1.25
-    df.loc[c5 & c7 & c8 & ~c6, "SAMK"] = -1.0
-    df.loc[c5 & c7 & ~c8 & ~c6, "SAMK"] = -0.5
-    df.loc[(c5 | c7) & ~c6 & ~c8, "SAMK"] = -0.25
+    df.loc[(c1 & c2 & c3 & c4).fillna(False), "SAMK"] = 1.25
+    df.loc[(c1 & c3 & c4 & ~c2).fillna(False), "SAMK"] = 1.0
+    df.loc[(c1 & c3 & ~c4 & ~c2).fillna(False), "SAMK"] = 0.5
+    df.loc[((c1 | c3) & ~c2 & ~c4).fillna(False), "SAMK"] = 0.25
+
+    df.loc[(c5 & c6 & c7 & c8).fillna(False), "SAMK"] = -1.25
+    df.loc[(c5 & c7 & c8 & ~c6).fillna(False), "SAMK"] = -1.0
+    df.loc[(c5 & c7 & ~c8 & ~c6).fillna(False), "SAMK"] = -0.5
+    df.loc[((c5 | c7) & ~c6 & ~c8).fillna(False), "SAMK"] = -0.25
     
 #    df["c1"] = df["Close"] > df["Open"]
 #    df["c2"] = df["Close"].shift(1) > df["Open"].shift(1)
