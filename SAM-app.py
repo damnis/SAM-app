@@ -524,42 +524,96 @@ if "Advies" not in df_signalen.columns:
     st.error("Kolom 'Advies' ontbreekt in de data.")
     st.stop()
 
-# ✅ 3. Backtestfunctie definitie
-def bereken_sam_rendement(df_signalen, signaaltype, close_col):
-    # ✅ Fallback voor signaaltype bij ongeldige input
-    geldige_signalentypes = ["Kopen", "Verkopen", "Beide"]
-    if signaaltype not in geldige_signalentypes:
-        signaaltype = "Beide"
+##--- Toevoeging: Backtestfunctie ---
 
+from datetime import date
+import pandas as pd
+import streamlit as st
+
+# âœ… Zorg dat de index datetime is
+df = df.copy()
+df.index = pd.to_datetime(df.index)
+
+# ðŸ—“ï¸ 1. Datumkeuze
+st.subheader("Vergelijk Marktrendement en SAM-rendement")
+
+# â±ï¸ Aangepaste startdatum = 1 januari huidig jaar
+current_year = date.today().year
+default_start = date(current_year, 1, 1)
+default_end = df.index.max().date()
+
+start_date = st.date_input("Startdatum analyse", default_start)
+end_date = st.date_input("Einddatum analyse", default_end)
+
+# ðŸ“… 2. Filter op periode
+df_period = df.loc[
+    (df.index.date >= start_date) & (df.index.date <= end_date)
+].copy()
+
+# ðŸ§¹ Flatten MultiIndex indien nodig
+if isinstance(df_period.columns, pd.MultiIndex):
+    df_period.columns = [
+        "_".join([str(i) for i in col if i]) for col in df_period.columns
+    ]
+
+# ðŸ” Zoek geldige 'Close'-kolom
+close_col = next(
+    (col for col in df_period.columns if col.lower().startswith("close")), None
+)
+
+if not close_col:
+    st.error("âŒ Geen geldige 'Close'-kolom gevonden in deze dataset.")
+    st.stop()
+
+# ðŸ“ˆ Marktrendement (Buy & Hold)
+df_period[close_col] = pd.to_numeric(df_period[close_col], errors="coerce")
+df_valid = df_period[close_col].dropna()
+
+marktrendement = None
+if len(df_valid) >= 2 and df_valid.iloc[0] != 0.0:
+    koers_start = df_valid.iloc[0]
+    koers_eind = df_valid.iloc[-1]
+    marktrendement = ((koers_eind - koers_start) / koers_start) * 100
+
+# âœ… Signaalkeuze geforceerd op Beide
+signaalkeuze = "Beide"
+
+# ðŸŽ¯ Filter alleen op Kopen/Verkopen
+advies_col = "Advies"
+df_signalen = df_period[df_period[advies_col].isin(["Kopen", "Verkopen"])].copy()
+
+# ðŸ“Š 3. Backtestfunctie: sluit op close van nieuw signaal
+def bereken_sam_rendement(df_signalen, signaal_type="Beide", close_col="Close"):
     rendementen = []
     trades = []
-
-    entry_type = None
     entry_price = None
     entry_date = None
+    entry_type = None
 
-    for i in range(len(df_signalen)):
-        advies = df_signalen["Advies"].iloc[i]
-        close = df_signalen[close_col].iloc[i]
-        datum = df_signalen.index[i]
+    type_map = {"Koop": "Kopen", "Verkoop": "Verkopen", "Beide": "Beide"}
+    mapped_type = type_map.get(signaal_type, "Beide")
 
-        # ✅ Start trade direct bij begin van periode als advies geldig is
-        if i == 0 and advies in ["Kopen", "Verkopen"]:
-            entry_type = advies
-            entry_price = close
-            entry_date = datum
-            continue
+    for datum, row in df_signalen.iterrows():
+        advies = row["Advies"]
+        close = row[close_col]
 
-        # ✅ Sluit trade bij wisseling van advies
-        if entry_type and advies != entry_type and advies in ["Kopen", "Verkopen"]:
-            sluit_close = close
-            sluit_datum = datum
+        if entry_type is None:
+            if mapped_type == "Beide" or advies == mapped_type:
+                entry_type = advies
+                entry_price = close
+                entry_date = datum
+        else:
+            if advies != entry_type and (mapped_type == "Beide" or entry_type == mapped_type):
+                # Sluit trade op nieuwe signaal
+                sluit_datum = datum
+                sluit_close = close
 
-            if signaaltype in ["Beide", entry_type]:
-                rendement = ((sluit_close - entry_price) / entry_price * 100
-                             if entry_type == "Kopen"
-                             else (entry_price - sluit_close) / entry_price * 100)
+                if entry_type == "Kopen":
+                    rendement = (sluit_close - entry_price) / entry_price * 100
+                else:
+                    rendement = (entry_price - sluit_close) / entry_price * 100
 
+                rendementen.append(rendement)
                 trades.append({
                     "Type": entry_type,
                     "Open datum": entry_date.date(),
@@ -568,52 +622,42 @@ def bereken_sam_rendement(df_signalen, signaaltype, close_col):
                     "Sluit prijs": round(sluit_close, 2),
                     "Rendement (%)": round(rendement, 2)
                 })
-                rendementen.append(rendement)
 
-            # Start nieuwe trade
-            entry_type = advies
-            entry_price = close
-            entry_date = datum
+                # Eventueel nieuwe trade openen
+                if mapped_type == "Beide" or advies == mapped_type:
+                    entry_type = advies
+                    entry_price = close
+                    entry_date = datum
+                else:
+                    entry_type = None
+                    entry_price = None
+                    entry_date = None
 
-    # ✅ Sluit eventueel open trade aan eind van periode
+    # Forceer sluiting op einddatum
     if entry_type and entry_price is not None:
         laatste_datum = df_signalen.index[-1]
         laatste_koers = df_signalen[close_col].iloc[-1]
 
-        if signaaltype in ["Beide", entry_type]:
-            rendement = ((laatste_koers - entry_price) / entry_price * 100
-                         if entry_type == "Kopen"
-                         else (entry_price - laatste_koers) / entry_price * 100)
+        if entry_type == "Kopen":
+            rendement = (laatste_koers - entry_price) / entry_price * 100
+        else:
+            rendement = (entry_price - laatste_koers) / entry_price * 100
 
-            trades.append({
-                "Type": entry_type,
-                "Open datum": entry_date.date(),
-                "Open prijs": round(entry_price, 2),
-                "Sluit datum": laatste_datum.date(),
-                "Sluit prijs": round(laatste_koers, 2),
-                "Rendement (%)": round(rendement, 2)
-            })
-            rendementen.append(rendement)
-
-    # ✅ Filter NaN/foute trades eruit
-    geldige_trades = []
-    for t in trades:
-        try:
-            if all(k in t and pd.notna(t[k]) and isinstance(t[k], (int, float)) for k in ["Open prijs", "Sluit prijs", "Rendement (%)"]) and t["Open prijs"] != 0.0:
-                geldige_trades.append(t)
-        except Exception:
-            continue
+        rendementen.append(rendement)
+        trades.append({
+            "Type": entry_type,
+            "Open datum": entry_date.date(),
+            "Open prijs": round(entry_price, 2),
+            "Sluit datum": laatste_datum.date(),
+            "Sluit prijs": round(laatste_koers, 2),
+            "Rendement (%)": round(rendement, 2)
+        })
 
     sam_rendement = sum(rendementen) if rendementen else 0.0
-    return sam_rendement, geldige_trades, rendementen
+    return sam_rendement, trades, rendementen
 
-# ✅ 4. Fallback signaalkeuze
-geldige_signalentypes = ["Kopen", "Verkopen", "Beide"]
-if "signaalkeuze" not in locals() or signaalkeuze not in geldige_signalentypes:
-    signaalkeuze = "Beide"
-
-# ✅ 5. Backtest uitvoeren
-sam_rendement, trades, rendementen = bereken_sam_rendement(df_signalen, signaalkeuze, close_col="Close")
+# âœ… 4. Berekening
+sam_rendement, trades, rendementen = bereken_sam_rendement(df_signalen, signaalkeuze, close_col)
 
 # ✅ 6. Visueel weergeven
 col1, col2 = st.columns(2)
