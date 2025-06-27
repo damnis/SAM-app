@@ -237,7 +237,16 @@ ustech_tickers = {
     "GOOGL": "Alphabet (GOOGL)",
     "MSFT": "Microsoft"
 }
-
+eurostoxx_tickers = {
+    'ASML.AS': 'ASML Holding', 'AIR.PA': 'Airbus', 'BAS.DE': 'BASF', 'BAYN.DE': 'Bayer',
+    'BNP.PA': 'BNP Paribas', 'MBG.DE': 'Mercedes-Benz Group', 'ENEL.MI': 'Enel',
+    'ENGI.PA': 'Engie', 'IBE.MC': 'Iberdrola', 'MC.PA': 'LVMH', 'OR.PA': 'L’Oréal',
+    'PHIA.AS': 'Philips', 'SAN.PA': 'Sanofi', 'SAP.DE': 'SAP', 'SIE.DE': 'Siemens',
+    'SU.PA': 'Schneider Electric', 'TTE.PA': 'TotalEnergies', 'VIV.PA': 'Vivendi',
+    'AD.AS': 'Ahold Delhaize', 'CRH.L': 'CRH', 'DPW.DE': 'Deutsche Post', 'IFX.DE': 'Infineon',
+    'ITX.MC': 'Inditex', 'MT.AS': 'ArcelorMittal', 'RI.PA': 'Pernod Ricard', 'STLA.MI': 'Stellantis',
+    'UN01.DE': 'Uniper'
+}
 # --- Toevoeging tickers AMX & Crypto ---
 amx_tickers = {
     "AMG.AS": "AMG", "ARCAD.AS": "Arcadis", "BAMNB.AS": "BAM Groep",
@@ -254,6 +263,7 @@ tabs_mapping = {
     "🇺🇸 Dow Jones": dow_tickers,
     "🇺🇸 Nasdaq": nasdaq_tickers,
     "🇺🇸 US Tech": ustech_tickers,
+    "🇪🇺 Eurostoxx": eurostoxx_tickers,
     "🇳🇱 AEX": aex_tickers,
     "🇳🇱 AMX": amx_tickers,
     "🌐 Crypto": crypto_tickers
@@ -267,6 +277,7 @@ valutasymbool = {
     "🇳🇱 AMX": "€ ",
     "🇺🇸 Dow Jones": "$ ",
     "🇺🇸 Nasdaq": "$ ",
+    "🇪🇺 Eurostoxx": "€ ",
     "🇺🇸 US Tech": "$ ",
     "🌐 Crypto": "",  # Geen symbool
 }.get(selected_tab, "")
