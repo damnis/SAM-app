@@ -586,16 +586,8 @@ def bereken_sam_rendement(df_signalen, signaaltype, close_col):
             })
             rendementen.append(rendement)
 
-    # ✅ Valideer of signaalkeuze geldig is (voorkomt NameError)
-geldige_signalentypes = df_signalen["Advies"].dropna().unique().tolist()
-
-# Indien signaalkeuze niet geldig of niet opgegeven, kies standaard "Beide"
-if "signaalkeuze" not in locals() or signaalkeuze not in ["Kopen", "Verkopen", "Beide"]:
-    signaalkeuze = "Beide"
-    
     sam_rendement = sum(rendementen) if rendementen else 0.0
-            return sam_rendement, trades, rendementen
-
+    return sam_rendement, trades, rendementen
 
 # 🔍 Extra validatie
 def filter_geldige_trades(trades):
