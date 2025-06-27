@@ -72,21 +72,18 @@ def calculate_sam(df):
     df.loc[(df["c1"] & df["c6"] & df["c7"]).fillna(False), "SAMK"] = -1
 
     # --- SAMG op basis van Weighted Moving Averages + Crossovers ---
-    # WMA's
     from ta.trend import WMAIndicator
 
-    # Bereken WMA18 en WMA35
-    wma_18 = pd.Series(WMAIndicator(df["Close"], window=18).wma().values.flatten(), index=df.index)
-    wma_35 = pd.Series(WMAIndicator(df["Close"], window=35).wma().values.flatten(), index=df.index)
-
-    # Bereken verschuiving
+    # Bereken WMA's
+    wma_18 = WMAIndicator(df["Close"], window=18).wma()
+    wma_35 = WMAIndicator(df["Close"], window=35).wma()
     wma_18_shifted = wma_18.shift(1)
 
-    # Kruisingen detecteren
+    # Kruisingen
     crossover_up = (wma_18_shifted < wma_35.shift(1)) & (wma_18 > wma_35)
     crossover_down = (wma_18_shifted > wma_35.shift(1)) & (wma_18 < wma_35)
 
-    # Bereken SAMG op basis van regels
+    # SAMG score
     df["SAMG"] = 0.0
     df.loc[crossover_up, "SAMG"] = 1.0
     df.loc[crossover_down, "SAMG"] = -1.0
@@ -94,7 +91,7 @@ def calculate_sam(df):
     df.loc[(wma_18 < wma_18_shifted * 1.0015) & (wma_18 > wma_18_shifted), "SAMG"] = -0.5
     df.loc[(wma_18 > wma_18_shifted / 1.0015) & (wma_18 <= wma_18_shifted), "SAMG"] = 0.5
     df.loc[(wma_18 < wma_18_shifted / 1.0015) & (wma_18 <= wma_18_shifted), "SAMG"] = -0.5
-# Rest blijft 0.0 (default)
+
 
 #  samg oud
 #    df["Change"] = df["Close"].pct_change()
