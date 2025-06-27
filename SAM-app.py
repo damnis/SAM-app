@@ -11,15 +11,15 @@ def fetch_data(ticker, interval):
 
     # Intervalspecifieke periode instellen
     if interval == "15m":
-        period = "7d"
-    elif interval == "1h":
         period = "30d"
+    elif interval == "1h":
+        period = "720d"
     elif interval == "4h":
-        period = "60d"
-    elif interval == "1d":
         period = "360d"
+    elif interval == "1d":
+        period = "7200d"
     else:
-        period = "360wk"
+        period = "1200wk"
 
     # Data ophalen
     df = yf.download(ticker, interval=interval, period=period)
