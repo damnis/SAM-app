@@ -73,9 +73,10 @@ def calculate_sam(df):
 
     # --- SAMG op basis van Weighted Moving Averages + Crossovers ---
     # WMA's
-    wma_18 = ta.trend.wma_indicator(df["Close"], window=18)
-    wma_35 = ta.trend.wma_indicator(df["Close"], window=35)
+    from ta.trend import WMAIndicator
 
+    wma_18 = WMAIndicator(close=df["Close"], window=18).wma()
+    wma_35 = WMAIndicator(close=df["Close"], window=35).wma()
     # Vorige WMA18 voor kleine bewegingen
     wma_18_prev = wma_18.shift(1)
     wma_35_prev = wma_35.shift(1)
