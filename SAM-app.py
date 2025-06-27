@@ -397,6 +397,15 @@ df = calculate_sam(df)
 #df, huidig_advies = determine_advice(df, threshold=thresh)
 df, huidig_advies = determine_advice(df, threshold=thresh)
 #df, huidig_advies = determine_advice(df, threshold=thresh)
+# debugging tools
+    st.caption(f"SAM-componenten gemiddeld: "
+           f"SAMK={df['SAMK'].mean():+.2f}, "
+           f"SAMG={df['SAMG'].mean():+.2f}, "
+           f"SAMT={df['SAMT'].mean():+.2f}, "
+           f"SAMD={df['SAMD'].mean():+.2f}, "
+           f"SAMM={df['SAMM'].mean():+.2f}, "
+           f"SAMX={df['SAMX'].mean():+.2f}, "
+           f"SAM totaal={df['SAM'].mean():+.2f}")
 
 # Grafieken
 #st.subheader(f"SAM-indicator en trend voor {ticker}")
@@ -765,16 +774,7 @@ if trades:
 else:
     st.info("ℹ️ Geen trades gevonden binnen de geselecteerde periode.")
     
-    # debugging tools
-    st.caption(f"SAM-componenten gemiddeld: "
-           f"SAMK={df['SAMK'].mean():+.2f}, "
-           f"SAMG={df['SAMG'].mean():+.2f}, "
-           f"SAMT={df['SAMT'].mean():+.2f}, "
-           f"SAMD={df['SAMD'].mean():+.2f}, "
-           f"SAMM={df['SAMM'].mean():+.2f}, "
-           f"SAMX={df['SAMX'].mean():+.2f}, "
-           f"SAM totaal={df['SAM'].mean():+.2f}")
-
+    
 
 
 
