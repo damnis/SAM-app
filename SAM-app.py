@@ -126,17 +126,27 @@ def determine_advice(df, threshold):
     groepen = list(df.groupby("AdviesGroep"))
 
     for i in range(len(groepen)):
-        _, groep = groepen[i]
-        advies = groep["Advies"].iloc[0]
+    _, groep = groepen[i]
+    advies = groep["Advies"].iloc[0]
+
+    try:
         start = float(groep["Close"].iloc[0])
+    except:
+        start = np.nan
 
     if i < len(groepen) - 1:
-        volgende_groep = groepen[i + 1][1]
-        eind = float(volgende_groep["Close"].iloc[0])
+        try:
+            volgende_groep = groepen[i + 1][1]
+            eind = float(volgende_groep["Close"].iloc[0])
+        except:
+            eind = np.nan
     else:
-        eind = float(groep["Close"].iloc[-1])
+        try:
+            eind = float(groep["Close"].iloc[-1])
+        except:
+            eind = np.nan
 
-    # ✅ Robuuste check
+    # ✅ Zorg dat er altijd waarden worden toegevoegd
     if start != 0 and not pd.isna(start) and not pd.isna(eind):
         markt_rendement = (eind - start) / start
         sam_rendement = markt_rendement if advies == "Kopen" else -markt_rendement
@@ -144,8 +154,8 @@ def determine_advice(df, threshold):
         markt_rendement = 0.0
         sam_rendement = 0.0
 
-        rendementen.extend([markt_rendement] * len(groep))
-        sam_rendementen.extend([sam_rendement] * len(groep))
+    rendementen.extend([markt_rendement] * len(groep))
+    sam_rendementen.extend([sam_rendement] * len(groep))
 
     df["Markt-%"] = rendementen
     df["SAM-%"] = sam_rendementen
