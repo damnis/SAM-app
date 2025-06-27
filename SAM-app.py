@@ -515,7 +515,7 @@ st.markdown(html, unsafe_allow_html=True)
 
 # 📊 3. Backtestfunctie: sluit op close van nieuw signaal
 ## 📊 3. Backtestfunctie: sluit op close van nieuw signaal
-d# ✅ 1. Data inladen of ontvangen (voorbeeld)
+# ✅ 1. Data inladen of ontvangen (voorbeeld)
 df = laad_data(ticker, interval)  # Vervang door jouw eigen inlaadfunctie
 
 # ✅ 2. Data voorbereiden voor backtest (vereist kolom 'Advies')
