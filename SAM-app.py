@@ -724,29 +724,29 @@ st.caption(
     f"Aantal afgeronde **verkoop** trades: **{aantal_verkoop}**, totaal resultaat SAM-% verkoop: **{rendement_verkoop:+.2f}%**, aantal succesvol: **{aantal_succesvol_verkoop}**"
 )
 
-    # 🎨 Stylingfunctie voor kleuren
-    def kleur_positief_negatief(val):
-        if pd.isna(val):
-            kleur = "#808080"  # grijs
-        elif val > 0:
-            kleur = "#008000"  # groen
-        elif val < 0:
-            kleur = "#FF0000"  # rood
-        else:
-            kleur = "#808080"  # grijs
-        return f"color: {kleur}"
+# 🎨 Stylingfunctie voor kleuren
+def kleur_positief_negatief(val):
+    if pd.isna(val):
+        kleur = "#808080"  # grijs
+    elif val > 0:
+        kleur = "#008000"  # groen
+    elif val < 0:
+        kleur = "#FF0000"  # rood
+    else:
+        kleur = "#808080"  # grijs
+    return f"color: {kleur}"
 
-    # 🖌️ Format & styler instellen
-    kleurbare_kolommen = ["Markt-%", "SAM-% tot.", "SAM-% Koop", "SAM-% Verkoop"]
+# 🖌️ Format & styler instellen
+kleurbare_kolommen = ["Markt-%", "SAM-% tot.", "SAM-% Koop", "SAM-% Verkoop"]
 
-    toon_alle = st.toggle("Toon alle trades", value=False)
-    df_display = df_trades if toon_alle or len(df_trades) <= 12 else df_trades.iloc[-12:]
+toon_alle = st.toggle("Toon alle trades", value=False)
+df_display = df_trades if toon_alle or len(df_trades) <= 12 else df_trades.iloc[-12:]
 
-    styler = df_display.style.format({col: "{:+.2f}%" for col in kleurbare_kolommen})
-    styler = styler.applymap(kleur_positief_negatief, subset=kleurbare_kolommen)
+styler = df_display.style.format({col: "{:+.2f}%" for col in kleurbare_kolommen})
+styler = styler.applymap(kleur_positief_negatief, subset=kleurbare_kolommen)
 
-    # 🖥️ Tabel tonen
-    st.dataframe(styler, use_container_width=True)
+# 🖥️ Tabel tonen
+st.dataframe(styler, use_container_width=True)
 
 else:
     st.info("ℹ️ Geen trades gevonden binnen de geselecteerde periode.")
