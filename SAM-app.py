@@ -594,7 +594,7 @@ if "signaalkeuze" not in locals() or signaalkeuze not in ["Kopen", "Verkopen", "
     signaalkeuze = "Beide"
     
     sam_rendement = sum(rendementen) if rendementen else 0.0
-    return sam_rendement, trades, rendementen
+return sam_rendement, trades, rendementen
 
 
 # 🔍 Extra validatie
