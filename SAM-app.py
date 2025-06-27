@@ -680,49 +680,49 @@ if trades:
         st.warning("Er zijn geen geldige trades gevonden voor deze selectie.")
 return
 
-    # 🧮 DataFrame bouwen
+# 🧮 DataFrame bouwen
 df_trades = pd.DataFrame(trades)
     
-    # 📊 Extra kolommen toevoegen
-    df_trades["SAM-% Koop"] = df_trades.apply(
-        lambda row: row["Rendement (%)"] if row["Type"] == "Kopen" else None, axis=1
-    )
-    df_trades["SAM-% Verkoop"] = df_trades.apply(
-        lambda row: row["Rendement (%)"] if row["Type"] == "Verkopen" else None, axis=1
-    )
-    df_trades["Markt-%"] = df_trades.apply(
-        lambda row: round(((row["Sluit prijs"] - row["Open prijs"]) / row["Open prijs"]) * 100, 2),
-        axis=1
-    )
-    df_trades = df_trades.rename(columns={"Rendement (%)": "SAM-% tot."})
-    df_trades = df_trades[
-        ["Open datum", "Open prijs", "Sluit datum", "Sluit prijs",
-         "Markt-%", "SAM-% tot.", "SAM-% Koop", "SAM-% Verkoop"]
-    ]
+# 📊 Extra kolommen toevoegen
+df_trades["SAM-% Koop"] = df_trades.apply(
+    lambda row: row["Rendement (%)"] if row["Type"] == "Kopen" else None, axis=1
+)
+df_trades["SAM-% Verkoop"] = df_trades.apply(
+    lambda row: row["Rendement (%)"] if row["Type"] == "Verkopen" else None, axis=1
+)
+df_trades["Markt-%"] = df_trades.apply(
+    lambda row: round(((row["Sluit prijs"] - row["Open prijs"]) / row["Open prijs"]) * 100, 2),
+    axis=1
+)
+df_trades = df_trades.rename(columns={"Rendement (%)": "SAM-% tot."})
+df_trades = df_trades[
+    ["Open datum", "Open prijs", "Sluit datum", "Sluit prijs",
+    "Markt-%", "SAM-% tot.", "SAM-% Koop", "SAM-% Verkoop"]
+]
 
-    # 📋 Statistieken berekenen
-    aantal_trades = len(df_trades)
-    aantal_koop = df_trades["SAM-% Koop"].notna().sum()
-    aantal_verkoop = df_trades["SAM-% Verkoop"].notna().sum()
+# 📋 Statistieken berekenen
+aantal_trades = len(df_trades)
+aantal_koop = df_trades["SAM-% Koop"].notna().sum()
+aantal_verkoop = df_trades["SAM-% Verkoop"].notna().sum()
 
-    rendement_totaal = df_trades["SAM-% tot."].sum()
-    rendement_koop = df_trades["SAM-% Koop"].sum(skipna=True)
-    rendement_verkoop = df_trades["SAM-% Verkoop"].sum(skipna=True)
+rendement_totaal = df_trades["SAM-% tot."].sum()
+rendement_koop = df_trades["SAM-% Koop"].sum(skipna=True)
+rendement_verkoop = df_trades["SAM-% Verkoop"].sum(skipna=True)
 
-    aantal_succesvol = (df_trades["SAM-% tot."] > 0).sum()
-    aantal_succesvol_koop = (df_trades["SAM-% Koop"] > 0).sum()
-    aantal_succesvol_verkoop = (df_trades["SAM-% Verkoop"] > 0).sum()
+aantal_succesvol = (df_trades["SAM-% tot."] > 0).sum()
+aantal_succesvol_koop = (df_trades["SAM-% Koop"] > 0).sum()
+aantal_succesvol_verkoop = (df_trades["SAM-% Verkoop"] > 0).sum()
 
-    # 📋 Caption tonen (STAP 4 volledig)
-    st.caption(
-        f"Aantal afgeronde **trades**: **{aantal_trades}**, totaal resultaat SAM-%: **{rendement_totaal:+.2f}%** binnen deze periode, aantal succesvol: **{aantal_succesvol}**"
-    )
-    st.caption(
-        f"Aantal afgeronde **koop** trades: **{aantal_koop}**, totaal resultaat SAM-% koop: **{rendement_koop:+.2f}%**, aantal succesvol: **{aantal_succesvol_koop}**"
-    )
-    st.caption(
-        f"Aantal afgeronde **verkoop** trades: **{aantal_verkoop}**, totaal resultaat SAM-% verkoop: **{rendement_verkoop:+.2f}%**, aantal succesvol: **{aantal_succesvol_verkoop}**"
-    )
+# 📋 Caption tonen (STAP 4 volledig)
+st.caption(
+    f"Aantal afgeronde **trades**: **{aantal_trades}**, totaal resultaat SAM-%: **{rendement_totaal:+.2f}%** binnen deze periode, aantal succesvol: **{aantal_succesvol}**"
+)
+st.caption(
+    f"Aantal afgeronde **koop** trades: **{aantal_koop}**, totaal resultaat SAM-% koop: **{rendement_koop:+.2f}%**, aantal succesvol: **{aantal_succesvol_koop}**"
+)
+st.caption(
+    f"Aantal afgeronde **verkoop** trades: **{aantal_verkoop}**, totaal resultaat SAM-% verkoop: **{rendement_verkoop:+.2f}%**, aantal succesvol: **{aantal_succesvol_verkoop}**"
+)
 
     # 🎨 Stylingfunctie voor kleuren
     def kleur_positief_negatief(val):
