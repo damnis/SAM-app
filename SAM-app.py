@@ -114,8 +114,8 @@ def determine_advice(df, threshold):
     sam_rendement_list = []
 
     for idx, row in df.iterrows():
-    advies = row["Advies"]
-    close = row["Close"]
+        advies = row["Advies"]
+        close = row["Close"]
 
     if not isinstance(advies, str):
         markt_rendement_list.append(np.nan)
