@@ -636,7 +636,24 @@ def bereken_sam_rendement(df_signalen, signaaltype, close_col):
 
     sam_rendement = sum(rendementen) if rendementen else 0.0
     return sam_rendement, trades, rendementen
-    
+  
+# extra filter trades
+def filter_geldige_trades(trades):
+    """
+    Verwijdert alle trades met ontbrekende of ongeldige waarden.
+    Vereist: 'Open prijs', 'Sluit prijs' en 'Rendement (%)' als geldige numerieke waarden.
+    """
+    geldige_trades = []
+    for t in trades:
+        try:
+            if all(
+                k in t and pd.notna(t[k]) and isinstance(t[k], (int, float))
+                for k in ["Open prijs", "Sluit prijs", "Rendement (%)"]
+            ) and t["Open prijs"] != 0.0:
+                geldige_trades.append(t)
+        except Exception:
+            continue  # Bij twijfel: overslaan
+    return geldige_trades  
 
 # ✅ 4. Berekening
 sam_rendement, trades, rendementen = bereken_sam_rendement(df_signalen, signaalkeuze, close_col)
@@ -650,9 +667,21 @@ col2.metric("📊 SAM-rendement", f"{sam_rendement:+.2f}%" if isinstance(sam_ren
 ### waarden en tabel captions  vanaf hier
 
 if trades:
-    # 🧮 DataFrame bouwen
-    df_trades = pd.DataFrame(trades)
+    # ❌ Verwijder trades met NaN of ontbrekende info
+trades = [
+    t for t in trades
+    if all(k in t and pd.notna(t[k]) for k in ["Open prijs", "Sluit prijs", "Rendement (%)"])
+]
 
+    # 🧮 DataFrame bouwen
+trades = filter_geldige_trades(trades)
+
+if not trades:
+    st.warning("Er zijn geen geldige trades gevonden voor deze selectie.")
+    return
+
+df_trades = pd.DataFrame(trades)
+ 
     # 📊 Extra kolommen toevoegen
     df_trades["SAM-% Koop"] = df_trades.apply(
         lambda row: row["Rendement (%)"] if row["Type"] == "Kopen" else None, axis=1
