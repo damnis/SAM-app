@@ -41,15 +41,15 @@ from datetime import timedelta
 
 def bepaal_grafiekperiode(interval):
     if interval == "15m":
-        return timedelta(days=7)
+        return timedelta(days=5)
     elif interval == "1h":
-        return timedelta(days=30)
+        return timedelta(days=5)
     elif interval == "4h":
         return timedelta(days=60)
     elif interval == "1d":
-        return timedelta(days=360)
+        return timedelta(days=120)
     else:
-        return timedelta(weeks=360)  # bijv. bij weekly/monthly data
+        return timedelta(weeks=260)  # bijv. bij weekly/monthly data
 
     
 # --- SAM Indicatorberekeningen ---
