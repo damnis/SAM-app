@@ -554,7 +554,7 @@ advies_col = "Advies"
 df_signalen = df_period[df_period[advies_col].isin(["Kopen", "Verkopen"])].copy()
 
 # 📊 3. Backtestfunctie: sluit op close van nieuw signaal
-def bereken_sam_rendement(df_signalen, signaal_type="Beide"):
+def bereken_sam_rendement(df_signalen, signaal_type="Beide", close_col="Close"):
     rendementen = []
     trades = []
     entry_price = None
@@ -566,7 +566,7 @@ def bereken_sam_rendement(df_signalen, signaal_type="Beide"):
 
     for datum, row in df_signalen.iterrows():
         advies = row["Advies"]
-        close = row["Close"]
+        close = row[close_col]
 
         if entry_type is None:
             if mapped_type == "Beide" or advies == mapped_type:
@@ -607,7 +607,7 @@ def bereken_sam_rendement(df_signalen, signaal_type="Beide"):
     # Forceer sluiting op einddatum
     if entry_type and entry_price is not None:
         laatste_datum = df_signalen.index[-1]
-        laatste_koers = df_signalen["Close"].iloc[-1]
+        laatste_koers = df_signalen[close_col].iloc[-1]
 
         if entry_type == "Kopen":
             rendement = (laatste_koers - entry_price) / entry_price * 100
