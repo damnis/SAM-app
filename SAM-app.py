@@ -92,25 +92,23 @@ def calculate_sam(df):
     df.loc[df["daily_range"] < avg_range, "SAMD"] = -1
 
     # SAMM
-    df["SAMM"] = 0
-    # Bereken MACD en signaallijn
-    macd_ind = ta.trend.MACD(close=df["Close"], window_slow=26, window_fast=12, window_sign=9)
+    # ✅ Correcte MACD-berekening met ta
+    close_series = df["Close"].squeeze()  # Zorg dat het een Series is
+    macd_ind = ta.trend.MACD(close=close_series, window_slow=26, window_fast=12, window_sign=9)
 
     df["MACD"] = macd_ind.macd()
     df["SIGNAL"] = macd_ind.macd_signal()
 
-    # Verschil voor kruising detectie
+    # ✅ Detecteer MACD crossovers voor SAMM
     prev_macd = df["MACD"].shift(1)
     prev_signal = df["SIGNAL"].shift(1)
 
-    # SAMM berekening
     conditions = [
-        (prev_macd < prev_signal) & (df["MACD"] > df["SIGNAL"]),  # Crossover up
+        (prev_macd < prev_signal) & (df["MACD"] > df["SIGNAL"]),
         (df["MACD"] > df["SIGNAL"]),
-        (prev_macd > prev_signal) & (df["MACD"] < df["SIGNAL"]),  # Crossover down
+        (prev_macd > prev_signal) & (df["MACD"] < df["SIGNAL"]),
         (df["MACD"] <= df["SIGNAL"])
     ]
-
     keuzes = [1.0, 0.5, -1.0, -0.5]
 
     df["SAMM"] = np.select(conditions, keuzes, default=0.0)
