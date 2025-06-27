@@ -129,33 +129,37 @@ def determine_advice(df, threshold):
         _, groep = groepen[i]
         advies = groep["Advies"].iloc[0]
 
-    try:
-        start = float(groep["Close"].iloc[0])
-    except:
-        start = np.nan
+        start = groep["Close"].iloc[0]
+        eind = None
 
-    if i < len(groepen) - 1:
+        if i < len(groepen) - 1:
+            # Eerste koers van volgende groep
+            eind = groepen[i + 1][1]["Close"].iloc[0]
+        else:
+            # Laatste koers van deze groep
+            eind = groep["Close"].iloc[-1]
+
+        # ✅ Veiligheid: omzetting en check
         try:
-            volgende_groep = groepen[i + 1][1]
-            eind = float(volgende_groep["Close"].iloc[0])
-        except:
-            eind = np.nan
-    else:
-        try:
-            eind = float(groep["Close"].iloc[-1])
-        except:
-            eind = np.nan
+            start = float(start)
+            eind = float(eind)
+            if start != 0.0:
+                markt_rendement = (eind - start) / start
+                sam_rendement = markt_rendement if advies == "Kopen" else -markt_rendement
+            else:
+                markt_rendement = 0.0
+                sam_rendement = 0.0
+        except Exception:
+            markt_rendement = 0.0
+            sam_rendement = 0.0
 
-    # ✅ Zorg dat er altijd waarden worden toegevoegd
-    if start != 0 and not pd.isna(start) and not pd.isna(eind):
-        markt_rendement = (eind - start) / start
-        sam_rendement = markt_rendement if advies == "Kopen" else -markt_rendement
-    else:
-        markt_rendement = 0.0
-        sam_rendement = 0.0
+        # 🔁 Voeg altijd exacte lengte toe
+        rendementen.extend([markt_rendement] * len(groep))
+        sam_rendementen.extend([sam_rendement] * len(groep))
 
-    rendementen.extend([markt_rendement] * len(groep))
-    sam_rendementen.extend([sam_rendement] * len(groep))
+    # ✅ Laatste check: gelijke lengte
+    if len(rendementen) != len(df):
+        raise ValueError(f"Lengte mismatch: rendementen={len(rendementen)}, df={len(df)}")
 
     df["Markt-%"] = rendementen
     df["SAM-%"] = sam_rendementen
