@@ -514,9 +514,12 @@ st.markdown(html, unsafe_allow_html=True)
 
 
 # 📊 3. Backtestfunctie: sluit op close van nieuw signaal
-# 📊 3. Backtestfunctie: sluit op close van nieuw signaal
-# 📊 3. Backtestfunctie: sluit op close van nieuw signaal
+## 📊 3. Backtestfunctie: sluit op close van nieuw signaal
 def bereken_sam_rendement(df_signalen, signaaltype, close_col):
+    # ✅ Signaaltype controleren
+    if signaaltype not in ["Kopen", "Verkopen", "Beide"]:
+        signaaltype = "Beide"
+
     rendementen = []
     trades = []
 
@@ -529,23 +532,23 @@ def bereken_sam_rendement(df_signalen, signaaltype, close_col):
         close = df_signalen[close_col].iloc[i]
         datum = df_signalen.index[i]
 
-        # ✅ Forceer starttrade
+        # ✅ Start eerste trade meteen bij begin van periode als advies geldig is
         if i == 0 and advies in ["Kopen", "Verkopen"]:
             entry_type = advies
             entry_price = close
             entry_date = datum
             continue
 
-        # ✅ Sluit bij advieswissel
+        # ✅ Sluit trade als advies wijzigt en advies is geldig
         if entry_type and advies != entry_type and advies in ["Kopen", "Verkopen"]:
             sluit_close = close
             sluit_datum = datum
 
-            rendement = ((sluit_close - entry_price) / entry_price * 100
-                         if entry_type == "Kopen"
-                         else (entry_price - sluit_close) / entry_price * 100)
-
             if signaaltype in ["Beide", entry_type]:
+                rendement = ((sluit_close - entry_price) / entry_price * 100
+                             if entry_type == "Kopen"
+                             else (entry_price - sluit_close) / entry_price * 100)
+
                 trades.append({
                     "Type": entry_type,
                     "Open datum": entry_date.date(),
@@ -556,12 +559,12 @@ def bereken_sam_rendement(df_signalen, signaaltype, close_col):
                 })
                 rendementen.append(rendement)
 
-            # Nieuwe trade starten
+            # Start nieuwe entry op deze dag
             entry_type = advies
             entry_price = close
             entry_date = datum
 
-    # ✅ Sluit eventueel openstaande laatste trade op einddatum
+    # ✅ Sluit openstaande trade op einddatum van de selectie
     if entry_type and entry_price is not None:
         laatste_datum = df_signalen.index[-1]
         laatste_koers = df_signalen[close_col].iloc[-1]
@@ -581,8 +584,20 @@ def bereken_sam_rendement(df_signalen, signaaltype, close_col):
             })
             rendementen.append(rendement)
 
+    # ✅ Verwijder trades met ongeldige waarden
+    geldige_trades = []
+    for t in trades:
+        try:
+            if all(
+                k in t and pd.notna(t[k]) and isinstance(t[k], (int, float))
+                for k in ["Open prijs", "Sluit prijs", "Rendement (%)"]
+            ) and t["Open prijs"] != 0.0:
+                geldige_trades.append(t)
+        except Exception:
+            continue
+
     sam_rendement = sum(rendementen) if rendementen else 0.0
-    return sam_rendement, trades, rendementen
+    return sam_rendement, geldige_trades, rendementen
 
 # ✅ Extra functie om foutieve/lege trades te verwijderen
 def filter_geldige_trades(trades):
