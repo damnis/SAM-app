@@ -516,8 +516,9 @@ st.markdown(html, unsafe_allow_html=True)
 # 📊 3. Backtestfunctie: sluit op close van nieuw signaal
 ## 📊 3. Backtestfunctie: sluit op close van nieuw signaal
 def bereken_sam_rendement(df_signalen, signaaltype, close_col):
-    # ✅ Signaaltype controleren
-    if signaaltype not in ["Kopen", "Verkopen", "Beide"]:
+    # ✅ Fallback voor signaaltype bij ongeldige input
+    geldige_signalentypes = ["Kopen", "Verkopen", "Beide"]
+    if signaaltype not in geldige_signalentypes:
         signaaltype = "Beide"
 
     rendementen = []
@@ -532,14 +533,14 @@ def bereken_sam_rendement(df_signalen, signaaltype, close_col):
         close = df_signalen[close_col].iloc[i]
         datum = df_signalen.index[i]
 
-        # ✅ Start eerste trade meteen bij begin van periode als advies geldig is
+        # ✅ Start trade direct bij begin van periode als advies geldig is
         if i == 0 and advies in ["Kopen", "Verkopen"]:
             entry_type = advies
             entry_price = close
             entry_date = datum
             continue
 
-        # ✅ Sluit trade als advies wijzigt en advies is geldig
+        # ✅ Sluit trade bij wisseling van advies
         if entry_type and advies != entry_type and advies in ["Kopen", "Verkopen"]:
             sluit_close = close
             sluit_datum = datum
@@ -559,12 +560,12 @@ def bereken_sam_rendement(df_signalen, signaaltype, close_col):
                 })
                 rendementen.append(rendement)
 
-            # Start nieuwe entry op deze dag
+            # Start nieuwe entry direct
             entry_type = advies
             entry_price = close
             entry_date = datum
 
-    # ✅ Sluit openstaande trade op einddatum van de selectie
+    # ✅ Sluit laatste openstaande trade geforceerd op einddatum
     if entry_type and entry_price is not None:
         laatste_datum = df_signalen.index[-1]
         laatste_koers = df_signalen[close_col].iloc[-1]
@@ -584,7 +585,7 @@ def bereken_sam_rendement(df_signalen, signaaltype, close_col):
             })
             rendementen.append(rendement)
 
-    # ✅ Verwijder trades met ongeldige waarden
+    # ✅ Filter ongeldige of onvolledige trades eruit
     geldige_trades = []
     for t in trades:
         try:
