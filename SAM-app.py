@@ -418,12 +418,25 @@ if selected_tab == "🌐 Crypto":
     tabel["Close"] = tabel["Close"].map("{:.3f}".format)
 else:
     tabel["Close"] = tabel["Close"].map("{:.2f}".format)
+# ✅ Eerst de juiste berekening behouden als float (NIET afronden!)
+tabel["Markt-%"] = tabel["Markt-%"].astype(float) * 100
+tabel["SAM-%"] = tabel["SAM-%"].astype(float) * 100
 
-tabel["SAM"] = tabel["SAM"].map("{:.2f}".format)
-tabel["Trend"] = tabel["Trend"].map("{:.3f}".format)
+# ✅ Daarna afzonderlijke kolommen voor weergave formatteren
+tabel["Markt-% weergave"] = tabel["Markt-%"].map("{:+.2f}%".format)
+tabel["SAM-% weergave"] = tabel["SAM-%"].map("{:+.2f}%".format)
 
-tabel["Markt-%"] = (tabel["Markt-%"].astype(float) * 100).map("{:+.2f}%".format)
-tabel["SAM-%"] = (tabel["SAM-%"].astype(float) * 100).map("{:+.2f}%".format)
+tabel = tabel[["Datum", "Close", "Advies", "SAM", "Trend", "Markt-% weergave", "SAM-% weergave"]]
+tabel = tabel.rename(columns={
+    "Markt-% weergave": "Markt-%",
+    "SAM-% weergave": "SAM-%"
+})
+
+#tabel["SAM"] = tabel["SAM"].map("{:.2f}".format)
+#tabel["Trend"] = tabel["Trend"].map("{:.3f}".format)
+
+#tabel["Markt-%"] = (tabel["Markt-%"].astype(float) * 100).map("{:+.2f}%".format)
+#tabel["SAM-%"] = (tabel["SAM-%"].astype(float) * 100).map("{:+.2f}%".format)
 
 
 # HTML-rendering
