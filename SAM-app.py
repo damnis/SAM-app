@@ -74,7 +74,6 @@ def calculate_sam(df):
     df.loc[c1 & c3 & c4 & ~c2, "SAMK"] = 1.0
     df.loc[c1 & c3 & ~c4 & ~c2, "SAMK"] = 0.5
     df.loc[(c1 | c3) & ~c2 & ~c4, "SAMK"] = 0.25
-
     df.loc[c5 & c6 & c7 & c8, "SAMK"] = -1.25
     df.loc[c5 & c7 & c8 & ~c6, "SAMK"] = -1.0
     df.loc[c5 & c7 & ~c8 & ~c6, "SAMK"] = -0.5
