@@ -59,39 +59,40 @@ def calculate_sam(df):
 
     # Basiskolommen
     # --- SAMK op basis van candlestick-patronen ---
-#    df["SAMK"] = 0.0
+#   # --- SAMK op basis van candlestick-patronen ---
     df["SAMK"] = 0.0
-    c1 = df["Close"] > df["Open"]
-    c2 = df["Close"].shift(1) > df["Open"].shift(1)
-    c3 = df["Close"] > df["Close"].shift(1)
-    c4 = df["Close"].shift(1) > df["Close"].shift(2)
-    c5 = df["Close"] < df["Open"]
-    c6 = df["Close"].shift(1) < df["Open"].shift(1)
-    c7 = df["Close"] < df["Close"].shift(1)
-    c8 = df["Close"].shift(1) < df["Close"].shift(2)
 
-    cond = (c1 & c2 & c3 & c4).fillna(False)
+    c1 = (df["Close"] > df["Open"]).fillna(False)
+    c2 = (df["Close"].shift(1) > df["Open"].shift(1)).fillna(False)
+    c3 = (df["Close"] > df["Close"].shift(1)).fillna(False)
+    c4 = (df["Close"].shift(1) > df["Close"].shift(2)).fillna(False)
+    c5 = (df["Close"] < df["Open"]).fillna(False)
+    c6 = (df["Close"].shift(1) < df["Open"].shift(1)).fillna(False)
+    c7 = (df["Close"] < df["Close"].shift(1)).fillna(False)
+    c8 = (df["Close"].shift(1) < df["Close"].shift(2)).fillna(False)
+
+    cond = c1 & c2 & c3 & c4
     df.loc[cond, "SAMK"] = 1.25
 
-    cond = (c1 & c3 & c4).fillna(False)
+    cond = c1 & c3 & c4
     df.loc[cond, "SAMK"] = 1.0
 
-    cond = (c1 & c3).fillna(False)
+    cond = c1 & c3
     df.loc[cond, "SAMK"] = 0.5
 
-    cond = (c1 | c3).fillna(False)
+    cond = c1 | c3
     df.loc[cond, "SAMK"] = 0.25
 
-    cond = (c5 & c6 & c7 & c8).fillna(False)
+    cond = c5 & c6 & c7 & c8
     df.loc[cond, "SAMK"] = -1.25
 
-    cond = (c5 & c7 & c8).fillna(False)
+    cond = c5 & c7 & c8
     df.loc[cond, "SAMK"] = -1.0
 
-    cond = (c5 & c7).fillna(False)
+    cond = c5 & c7
     df.loc[cond, "SAMK"] = -0.5
 
-    cond = (c5 | c7).fillna(False)
+    cond = c5 | c7
     df.loc[cond, "SAMK"] = -0.25
     
 #    df["c1"] = df["Close"] > df["Open"]
