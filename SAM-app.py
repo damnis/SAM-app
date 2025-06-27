@@ -126,24 +126,23 @@ def determine_advice(df, threshold):
     groepen = list(df.groupby("AdviesGroep"))
 
     for i in range(len(groepen)):
-        _, groep = groepen[i]
-        advies = groep["Advies"].iloc[0]
-        start = groep["Close"].iloc[0]
+    _, groep = groepen[i]
+    advies = groep["Advies"].iloc[0]
+    start = float(groep["Close"].iloc[0])
 
-        # Gebruik close van volgende groep als sluitkoers, behalve bij laatste groep
-        if i < len(groepen) - 1:
-            volgende_groep = groepen[i + 1][1]
-            eind = volgende_groep["Close"].iloc[0]
-        else:
-            eind = groep["Close"].iloc[-1]
+    if i < len(groepen) - 1:
+        volgende_groep = groepen[i + 1][1]
+        eind = float(volgende_groep["Close"].iloc[0])
+    else:
+        eind = float(groep["Close"].iloc[-1])
 
-        # ✅ Robuuste berekening met fallback naar 0.0 bij foute data
-        if pd.notna(start) and pd.notna(eind) and start != 0:
-            markt_rendement = (eind - start) / start
-            sam_rendement = markt_rendement if advies == "Kopen" else -markt_rendement
-        else:
-            markt_rendement = 0.0
-            sam_rendement = 0.0
+    # ✅ Robuuste check
+    if start != 0 and not pd.isna(start) and not pd.isna(eind):
+        markt_rendement = (eind - start) / start
+        sam_rendement = markt_rendement if advies == "Kopen" else -markt_rendement
+    else:
+        markt_rendement = 0.0
+        sam_rendement = 0.0
 
         rendementen.extend([markt_rendement] * len(groep))
         sam_rendementen.extend([sam_rendement] * len(groep))
