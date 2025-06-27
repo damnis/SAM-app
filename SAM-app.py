@@ -573,10 +573,10 @@ df_signalen = df_period[df_period[advies_col].isin(["Kopen", "Verkopen"])].copy(
 # 📊 3. Backtestfunctie: sluit op close van nieuw signaal
 def bereken_sam_rendement(df_signalen, signaaltype, close_col):
     rendementen = []
-trades = []
-entry_type = None
-entry_price = None
-entry_date = None
+    trades = []
+    entry_type = None
+    entry_price = None
+    entry_date = None
 
 for i in range(len(df_signalen)):
     advies = df_signalen["Advies"].iloc[i]
@@ -640,6 +640,7 @@ if entry_type and entry_price is not None:
 # Totaal SAM-rendement
 sam_rendement = sum(rendementen) if rendementen else 0.0
 return sam_rendement, trades, rendementen
+    
 
 # ✅ 4. Berekening
 sam_rendement, trades, rendementen = bereken_sam_rendement(df_signalen, signaalkeuze, close_col)
