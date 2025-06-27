@@ -130,16 +130,20 @@ def determine_advice(df, threshold):
         advies = groep["Advies"].iloc[0]
         start = groep["Close"].iloc[0]
 
+        # Gebruik close van volgende groep als sluitkoers, behalve bij laatste groep
         if i < len(groepen) - 1:
-            # Gebruik eerste koers van volgende groep, hier verkoop moment iloc [0]
             volgende_groep = groepen[i + 1][1]
             eind = volgende_groep["Close"].iloc[0]
         else:
-            # Laatste groep → sluit op laatste koers van deze groep
             eind = groep["Close"].iloc[-1]
 
-        markt_rendement = (eind - start) / start
-        sam_rendement = markt_rendement if advies == "Kopen" else -markt_rendement
+        # ✅ Robuuste berekening met fallback naar 0.0 bij foute data
+        if pd.notna(start) and pd.notna(eind) and start != 0:
+            markt_rendement = (eind - start) / start
+            sam_rendement = markt_rendement if advies == "Kopen" else -markt_rendement
+        else:
+            markt_rendement = 0.0
+            sam_rendement = 0.0
 
         rendementen.extend([markt_rendement] * len(groep))
         sam_rendementen.extend([sam_rendement] * len(groep))
