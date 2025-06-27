@@ -122,7 +122,8 @@ def determine_advice(df, threshold):
             entry_price = close
             entry_date = datum
 
-        elif advies is not None and advies != vorige_advies:
+        elif isinstance(advies, str) and advies in ["Kopen", "Verkopen"] and advies != vorige_advies:
+        #elif advies is not None and advies != vorige_advies:
             # Nieuw advies = sluit trade
             sluit_price = close
             sluit_datum = datum
