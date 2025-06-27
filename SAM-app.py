@@ -620,7 +620,7 @@ def filter_geldige_trades(trades):
 #    signaalkeuze = "Beide"
 
 # ✅ 5. Berekening
-sam_rendement, trades, rendementen = bereken_sam_rendement(df_signalen, signaalkeuze, close_col)
+sam_rendement, geldige_trades, rendementen = bereken_sam_rendement(df_signalen, signaalkeuze, close_col)
 
 # ✅ 6. Resultaten tonen
 col1, col2 = st.columns(2)
