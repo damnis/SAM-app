@@ -614,10 +614,10 @@ def filter_geldige_trades(trades):
             continue
     return geldige_trades
 
-# ✅ 4. Signaalkeuze fallback
-geldige_signalentypes = df_signalen["Advies"].dropna().unique().tolist()
-if "signaalkeuze" not in locals() or signaalkeuze not in ["Kopen", "Verkopen", "Beide"]:
-    signaalkeuze = "Beide"
+# ✅ 4. Signaalkeuze fallback - reeds ingesteld
+#geldige_signalentypes = df_signalen["Advies"].dropna().unique().tolist()
+#if "signaalkeuze" not in locals() or signaalkeuze not in ["Kopen", "Verkopen", "Beide"]:
+#    signaalkeuze = "Beide"
 
 # ✅ 5. Berekening
 sam_rendement, trades, rendementen = bereken_sam_rendement(df_signalen, signaalkeuze, close_col)
