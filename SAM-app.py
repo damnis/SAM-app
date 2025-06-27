@@ -601,18 +601,26 @@ def bereken_sam_rendement(df_signalen, signaal_type="Beide", close_col="Close"):
         datum = df_signalen.index[i]
 
         # ✅ STAP 1: Forceer eerste trade bij begin selectie
-        if i == 0 and advies in ["Kopen", "Verkopen"]:
-            entry_type = advies
-            entry_price = close
-            entry_date = datum
-            continue
-
-
-        if entry_type is None:
+        # ✅ STAP 1: Forceer eerste geldige trade
+        if entry_type is None and advies in ["Kopen", "Verkopen"]:
             if mapped_type == "Beide" or advies == mapped_type:
                 entry_type = advies
                 entry_price = close
                 entry_date = datum
+                continue  # ⬅️ Na eerste entry niets anders doen in deze iteratie
+    
+     #   if i == 0 and advies in ["Kopen", "Verkopen"]:
+      #      entry_type = advies
+       #     entry_price = close
+     #       entry_date = datum
+            continue
+#
+
+  #      if entry_type is None:
+  #          if mapped_type == "Beide" or advies == mapped_type:
+  #              entry_type = advies
+    #            entry_price = close
+   #             entry_date = datum
         else:
             if advies != entry_type and (mapped_type == "Beide" or entry_type == mapped_type):
                 # Sluit trade op nieuwe signaal
