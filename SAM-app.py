@@ -120,8 +120,7 @@ def determine_advice(df, threshold):
     if not isinstance(advies, str):
         markt_rendement_list.append(np.nan)
         sam_rendement_list.append(np.nan)
-
-    continue
+        continue
 
     # Start nieuwe trade
     if vorige_advies is None and advies in ["Kopen", "Verkopen"]:
