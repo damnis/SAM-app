@@ -52,35 +52,38 @@ def bepaal_grafiekperiode(interval):
     else:
         return timedelta(weeks=260)  # bijv. bij weekly/monthly data
 
-st.subheader("✅ DataFrame Check vóór SAMK")
-st.write(df.head())
-st.write("Kolommen:", df.columns.tolist())   
+
 # --- SAM Indicatorberekeningen ---
 def calculate_sam(df):
     df = df.copy()
 
     # Basiskolommen
-    # --- SAMK op basis van candlestick-patronen ---
-    df["SAMK"] = 0.0
+    # --- SAMK: candlestick score op basis van patronen Open/Close ---
 
-    c1 = (df["Close"] > df["Open"])
-    c2 = (df["Close"].shift(1) > df["Open"].shift(1))
-    c3 = (df["Close"] > df["Close"].shift(1))
-    c4 = (df["Close"].shift(1) > df["Close"].shift(2))
-    c5 = (df["Close"] < df["Open"])
-    c6 = (df["Close"].shift(1) < df["Open"].shift(1))
-    c7 = (df["Close"] < df["Close"].shift(1))
-    c8 = (df["Close"].shift(1) < df["Close"].shift(2))
+df["c1"] = df["Close"] > df["Open"]
+df["c2"] = df["Close"].shift(1) > df["Open"].shift(1)
+df["c3"] = df["Close"] > df["Close"].shift(1)
+df["c4"] = df["Close"].shift(1) > df["Close"].shift(2)
+df["c5"] = df["Close"] < df["Open"]
+df["c6"] = df["Close"].shift(1) < df["Open"].shift(1)
+df["c7"] = df["Close"] < df["Close"].shift(1)
+df["c8"] = df["Close"].shift(1) < df["Close"].shift(2)
 
-    df.loc[(c1 & c2 & c3 & c4).reindex(df.index, fill_value=False), "SAMK"] = 1.25
-    df.loc[(c1 & c3 & c4).reindex(df.index, fill_value=False), "SAMK"] = 1.0
-    df.loc[(c1 & c3).reindex(df.index, fill_value=False), "SAMK"] = 0.5
-    df.loc[(c1 | c3).reindex(df.index, fill_value=False), "SAMK"] = 0.25
-    df.loc[(c5 & c6 & c7 & c8).reindex(df.index, fill_value=False), "SAMK"] = -1.25
-    df.loc[(c5 & c7 & c8).reindex(df.index, fill_value=False), "SAMK"] = -1.0
-    df.loc[(c5 & c7).reindex(df.index, fill_value=False), "SAMK"] = -0.5
-    df.loc[(c5 | c7).reindex(df.index, fill_value=False), "SAMK"] = -0.25
-    
+# Initieel alles op 0
+df["SAMK"] = 0.0
+
+# Positieve patronen
+df.loc[(df["c1"] & df["c2"] & df["c3"] & df["c4"]).fillna(False), "SAMK"] = 1.25
+df.loc[(df["c1"] & df["c3"] & df["c4"]).fillna(False), "SAMK"] = 1.0
+df.loc[(df["c1"] & df["c3"]).fillna(False), "SAMK"] = 0.5
+df.loc[(df["c1"] | df["c3"]).fillna(False), "SAMK"] = 0.25
+
+# Negatieve patronen
+df.loc[(df["c5"] & df["c6"] & df["c7"] & df["c8"]).fillna(False), "SAMK"] = -1.25
+df.loc[(df["c5"] & df["c7"] & df["c8"]).fillna(False), "SAMK"] = -1.0
+df.loc[(df["c5"] & df["c7"]).fillna(False), "SAMK"] = -0.5
+df.loc[(df["c5"] | df["c7"]).fillna(False), "SAMK"] = -0.25
+
 #    df["c1"] = df["Close"] > df["Open"]
 #    df["c2"] = df["Close"].shift(1) > df["Open"].shift(1)
 #    df["c3"] = df["Close"].shift(2) > df["Open"].shift(2)
