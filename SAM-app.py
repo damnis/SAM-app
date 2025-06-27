@@ -571,7 +571,6 @@ advies_col = "Advies"
 df_signalen = df_period[df_period[advies_col].isin(["Kopen", "Verkopen"])].copy()
 
 # 📊 3. Backtestfunctie: sluit op close van nieuw signaal
-def bereken_sam_rendement(df, signaaltype, close_col):
 def bereken_sam_rendement(df_signalen, signaaltype, close_col):
     rendementen = []
     trades = []
