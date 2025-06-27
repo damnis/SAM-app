@@ -615,34 +615,65 @@ if trades:
 
 
     # trades tabel
-    df_trades = pd.DataFrame(trades)
+    # ✅ DataFrame bouwen
+df_trades = pd.DataFrame(trades)
 
-    df_trades["SAM-% Koop"] = df_trades.apply(
-        lambda row: row["Rendement (%)"] if row["Type"] == "Kopen" else None, axis=1
-    )
-    df_trades["SAM-% Verkoop"] = df_trades.apply(
-        lambda row: row["Rendement (%)"] if row["Type"] == "Verkopen" else None, axis=1
-    )
-    df_trades["Markt-%"] = df_trades.apply(
-        lambda row: round(((row["Sluit prijs"] - row["Open prijs"]) / row["Open prijs"]) * 100, 2),
-        axis=1
-    )
+df_trades["SAM-% Koop"] = df_trades.apply(
+    lambda row: row["Rendement (%)"] if row["Type"] == "Kopen" else None, axis=1
+)
+df_trades["SAM-% Verkoop"] = df_trades.apply(
+    lambda row: row["Rendement (%)"] if row["Type"] == "Verkopen" else None, axis=1
+)
+df_trades["Markt-%"] = df_trades.apply(
+    lambda row: round(((row["Sluit prijs"] - row["Open prijs"]) / row["Open prijs"]) * 100, 2),
+    axis=1
+)
 
-    df_trades = df_trades.rename(columns={"Rendement (%)": "SAM-% tot."})
-    df_trades = df_trades[
-        ["Open datum", "Open prijs", "Sluit datum", "Sluit prijs",
-         "Markt-%", "SAM-% tot.", "SAM-% Koop", "SAM-% Verkoop"]
-    ]
+df_trades = df_trades.rename(columns={"Rendement (%)": "SAM-% tot."})
+df_trades = df_trades[
+    ["Open datum", "Open prijs", "Sluit datum", "Sluit prijs",
+     "Markt-%", "SAM-% tot.", "SAM-% Koop", "SAM-% Verkoop"]
+]
 
-    toon_alle = st.toggle("Toon alle trades", value=False)
-    if toon_alle or len(df_trades) <= 12:
-        st.dataframe(df_trades, use_container_width=True)
+# ✅ Styler functie voor kleuren
+def kleur_positief_negatief(val):
+    if pd.isna(val):
+        kleur = "#808080"  # grijs
+    elif val > 0:
+        kleur = "#008000"  # groen
+    elif val < 0:
+        kleur = "#FF0000"  # rood
     else:
-        st.dataframe(df_trades.tail(12), use_container_width=True)
+        kleur = "#808080"  # grijs
+    return f"color: {kleur}"
+
+# ✅ Styler toepassen op 4 kolommen
+kleurbare_kolommen = ["Markt-%", "SAM-% tot.", "SAM-% Koop", "SAM-% Verkoop"]
+styler = df_trades.style.format({col: "{:+.2f}%" for col in kleurbare_kolommen})
+styler = styler.applymap(kleur_positief_negatief, subset=kleurbare_kolommen)
+
+# ✅ Weergave in Streamlit
+toon_alle = st.toggle("Toon alle trades", value=False)
+if toon_alle or len(df_trades) <= 12:
+    st.dataframe(styler, use_container_width=True)
 else:
-    st.info("ℹ️ Geen trades gevonden binnen de geselecteerde periode.")
+    st.dataframe(styler.iloc[-12:], use_container_width=True)
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+# wit
 
 
 
