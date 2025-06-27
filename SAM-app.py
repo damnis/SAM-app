@@ -578,68 +578,68 @@ def bereken_sam_rendement(df_signalen, signaaltype, close_col):
     entry_price = None
     entry_date = None
 
-for i in range(len(df_signalen)):
-    advies = df_signalen["Advies"].iloc[i]
-    close = df_signalen[close_col].iloc[i]
-    datum = df_signalen.index[i]
+    for i in range(len(df_signalen)):
+        advies = df_signalen["Advies"].iloc[i]
+        close = df_signalen[close_col].iloc[i]
+        datum = df_signalen.index[i]
 
-    # Als er nog geen openstaande trade is
-    if entry_type is None and advies in ["Kopen", "Verkopen"]:
-        entry_type = advies
-        entry_price = close
-        entry_date = datum
-        continue
+        # Als er nog geen openstaande trade is
+        if entry_type is None and advies in ["Kopen", "Verkopen"]:
+            entry_type = advies
+            entry_price = close
+            entry_date = datum
+            continue
 
-    # Als het advies verandert en er is een openstaande trade
-    if entry_type and advies != entry_type and advies in ["Kopen", "Verkopen"]:
-        sluit_close = close
-        sluit_datum = datum
+        # Als het advies verandert en er is een openstaande trade
+        if entry_type and advies != entry_type and advies in ["Kopen", "Verkopen"]:
+            sluit_close = close
+            sluit_datum = datum
 
-        # Bereken rendement
+            # Bereken rendement
+            if entry_type == "Kopen":
+                rendement = (sluit_close - entry_price) / entry_price * 100
+            else:  # Verkoop
+                rendement = (entry_price - sluit_close) / entry_price * 100
+
+            rendementen.append(rendement)
+
+            trades.append({
+                "Type": entry_type,
+                "Open datum": entry_date.date(),
+                "Open prijs": round(entry_price, 2),
+                "Sluit datum": sluit_datum.date(),
+                "Sluit prijs": round(sluit_close, 2),
+                "Rendement (%)": round(rendement, 2)
+            })
+
+            # Start nieuwe trade direct met nieuw advies
+            entry_type = advies
+            entry_price = close
+            entry_date = datum
+
+    # Sluit eventueel openstaande trade op einddatum
+    if entry_type and entry_price is not None:
+        laatste_datum = df_signalen.index[-1]
+        laatste_koers = df_signalen[close_col].iloc[-1]
+
         if entry_type == "Kopen":
-            rendement = (sluit_close - entry_price) / entry_price * 100
-        else:  # Verkoop
-            rendement = (entry_price - sluit_close) / entry_price * 100
+            rendement = (laatste_koers - entry_price) / entry_price * 100
+        else:
+            rendement = (entry_price - laatste_koers) / entry_price * 100
 
         rendementen.append(rendement)
-
         trades.append({
             "Type": entry_type,
             "Open datum": entry_date.date(),
             "Open prijs": round(entry_price, 2),
-            "Sluit datum": sluit_datum.date(),
-            "Sluit prijs": round(sluit_close, 2),
+            "Sluit datum": laatste_datum.date(),
+            "Sluit prijs": round(laatste_koers, 2),
             "Rendement (%)": round(rendement, 2)
         })
 
-        # Start nieuwe trade direct met nieuw advies
-        entry_type = advies
-        entry_price = close
-        entry_date = datum
-
-# Sluit eventueel openstaande trade op einddatum
-if entry_type and entry_price is not None:
-    laatste_datum = df_signalen.index[-1]
-    laatste_koers = df_signalen[close_col].iloc[-1]
-
-    if entry_type == "Kopen":
-        rendement = (laatste_koers - entry_price) / entry_price * 100
-    else:
-        rendement = (entry_price - laatste_koers) / entry_price * 100
-
-    rendementen.append(rendement)
-    trades.append({
-        "Type": entry_type,
-        "Open datum": entry_date.date(),
-        "Open prijs": round(entry_price, 2),
-        "Sluit datum": laatste_datum.date(),
-        "Sluit prijs": round(laatste_koers, 2),
-        "Rendement (%)": round(rendement, 2)
-    })
-
-# Totaal SAM-rendement
-sam_rendement = sum(rendementen) if rendementen else 0.0
-return sam_rendement, trades, rendementen
+    # Totaal SAM-rendement
+    sam_rendement = sum(rendementen) if rendementen else 0.0
+    return sam_rendement, trades, rendementen
     
 
 # ✅ 4. Berekening
