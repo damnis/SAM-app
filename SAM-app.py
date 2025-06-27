@@ -516,7 +516,6 @@ st.markdown(html, unsafe_allow_html=True)
 # 📊 3. Backtestfunctie: sluit op close van nieuw signaal
 ## 📊 3. Backtestfunctie: sluit op close van nieuw signaal
 # ✅ 1. Data inladen of ontvangen (voorbeeld)
-
 # ✅ 2. Data voorbereiden voor backtest (vereist kolom 'Advies')
 df_signalen = df.copy()
 if "Advies" not in df_signalen.columns:
