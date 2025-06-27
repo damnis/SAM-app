@@ -600,12 +600,12 @@ col2.metric("📊 SAM-rendement", f"{sam_rendement:+.2f}%" if isinstance(sam_ren
 if trades:
     # aantal trades
     aantal_koop = sum(1 for t in trades if t["Type"] == "Kopen")
-aantal_verkoop = sum(1 for t in trades if t["Type"] == "Verkopen")
-st.caption(
-    f"Aantal afgeronde trades: **{len(trades)}** binnen deze periode  \n"
-    f"Aantal afgeronde **koop** trades: **{aantal_koop}**  \n"
-    f"Aantal afgeronde **verkoop** trades: **{aantal_verkoop}**"
-)
+    aantal_verkoop = sum(1 for t in trades if t["Type"] == "Verkopen")
+    st.caption(
+        f"Aantal afgeronde trades: **{len(trades)}** binnen deze periode  \n"
+        f"Aantal afgeronde **koop** trades: **{aantal_koop}**  \n"
+        f"Aantal afgeronde **verkoop** trades: **{aantal_verkoop}**"
+    )
    # st.caption(f"Aantal afgeronde trades: **{len(trades)}** binnen deze periode.")
 
 
