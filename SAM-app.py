@@ -387,6 +387,7 @@ df_grafiek = df[df.index >= cutoff_datum].copy()
 # --- Grafiek met SAM en Trend ---
 fig, ax1 = plt.subplots(figsize=(10, 4))
 ax1.bar(df_grafiek.index, df_grafiek["SAM"], color="lightblue", label="SAM")
+ax1.axhline(y=0, color="black", linewidth=1, linestyle="--")  # nullijn
 ax2 = ax1.twinx()
 ax2.plot(df_grafiek.index, df_grafiek["Trend"], color="red", label="Trend")
 ax1.set_ylabel("SAM")
