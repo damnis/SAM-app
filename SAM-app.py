@@ -52,7 +52,9 @@ def bepaal_grafiekperiode(interval):
     else:
         return timedelta(weeks=260)  # bijv. bij weekly/monthly data
 
-    
+st.subheader("✅ DataFrame Check vóór SAMK")
+st.write(df.head())
+st.write("Kolommen:", df.columns.tolist())   
 # --- SAM Indicatorberekeningen ---
 def calculate_sam(df):
     df = df.copy()
