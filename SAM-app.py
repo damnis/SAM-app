@@ -515,6 +515,7 @@ st.markdown(html, unsafe_allow_html=True)
 
 # 📊 3. Backtestfunctie: sluit op close van nieuw signaal
 # 📊 3. Backtestfunctie: sluit op close van nieuw signaal
+# 📊 3. Backtestfunctie: sluit op close van nieuw signaal
 def bereken_sam_rendement(df_signalen, signaaltype, close_col):
     rendementen = []
     trades = []
@@ -528,24 +529,23 @@ def bereken_sam_rendement(df_signalen, signaaltype, close_col):
         close = df_signalen[close_col].iloc[i]
         datum = df_signalen.index[i]
 
-        # ✅ FORCEER STARTTRADE OP EERSTE ADVIES
+        # ✅ Forceer starttrade
         if i == 0 and advies in ["Kopen", "Verkopen"]:
-            if signaaltype in ["Beide", advies]:
-                entry_type = advies
-                entry_price = close
-                entry_date = datum
+            entry_type = advies
+            entry_price = close
+            entry_date = datum
             continue
 
-        # ✅ SLUITEN EN OPENEN BIJ ADVIESWIJZIGING
+        # ✅ Sluit bij advieswissel
         if entry_type and advies != entry_type and advies in ["Kopen", "Verkopen"]:
+            sluit_close = close
+            sluit_datum = datum
+
+            rendement = ((sluit_close - entry_price) / entry_price * 100
+                         if entry_type == "Kopen"
+                         else (entry_price - sluit_close) / entry_price * 100)
+
             if signaaltype in ["Beide", entry_type]:
-                sluit_close = close
-                sluit_datum = datum
-
-                rendement = ((sluit_close - entry_price) / entry_price * 100
-                             if entry_type == "Kopen"
-                             else (entry_price - sluit_close) / entry_price * 100)
-
                 trades.append({
                     "Type": entry_type,
                     "Open datum": entry_date.date(),
@@ -556,17 +556,12 @@ def bereken_sam_rendement(df_signalen, signaaltype, close_col):
                 })
                 rendementen.append(rendement)
 
-            # Altijd nieuwe entry starten
-            if signaaltype in ["Beide", advies]:
-                entry_type = advies
-                entry_price = close
-                entry_date = datum
-            else:
-                entry_type = None
-                entry_price = None
-                entry_date = None
+            # Nieuwe trade starten
+            entry_type = advies
+            entry_price = close
+            entry_date = datum
 
-    # ✅ SLUIT EVENTUELE LAATSTE TRADE OP EINDDATUM
+    # ✅ Sluit eventueel openstaande laatste trade op einddatum
     if entry_type and entry_price is not None:
         laatste_datum = df_signalen.index[-1]
         laatste_koers = df_signalen[close_col].iloc[-1]
@@ -589,7 +584,7 @@ def bereken_sam_rendement(df_signalen, signaaltype, close_col):
     sam_rendement = sum(rendementen) if rendementen else 0.0
     return sam_rendement, trades, rendementen
 
-# 🔍 Extra validatie
+# ✅ Extra functie om foutieve/lege trades te verwijderen
 def filter_geldige_trades(trades):
     geldige_trades = []
     for t in trades:
@@ -603,41 +598,33 @@ def filter_geldige_trades(trades):
             continue
     return geldige_trades
 
+# ✅ 4. Signaalkeuze fallback
+geldige_signalentypes = df_signalen["Advies"].dropna().unique().tolist()
+if "signaalkeuze" not in locals() or signaalkeuze not in ["Kopen", "Verkopen", "Beide"]:
+    signaalkeuze = "Beide"
 
-# ✅ 4. Berekening
+# ✅ 5. Berekening
 sam_rendement, trades, rendementen = bereken_sam_rendement(df_signalen, signaalkeuze, close_col)
 
-# ✅ 5. Resultaten tonen
+# ✅ 6. Resultaten tonen
 col1, col2 = st.columns(2)
-
 col1.metric("Marktrendement (Buy & Hold)", f"{marktrendement:+.2f}%" if marktrendement is not None else "n.v.t.")
 col2.metric("📊 SAM-rendement", f"{sam_rendement:+.2f}%" if isinstance(sam_rendement, (int, float)) else "n.v.t.")
 
-# --- Trades tonen ---
 if trades:
-    # ❌ Verwijder ongeldige of NaN-trades
-    trades = [
-        t for t in trades
-        if all(k in t and pd.notna(t[k]) for k in ["Open prijs", "Sluit prijs", "Rendement (%)"])
-    ]
+    # ❌ Verwijder eventuele NaN-trades
     trades = filter_geldige_trades(trades)
 
     if not trades:
         st.warning("Er zijn geen geldige trades gevonden voor deze selectie.")
     else:
         df_trades = pd.DataFrame(trades)
-
-        # 📊 Extra kolommen
         df_trades["SAM-% Koop"] = df_trades.apply(
-            lambda row: row["Rendement (%)"] if row["Type"] == "Kopen" else None, axis=1
-        )
+            lambda row: row["Rendement (%)"] if row["Type"] == "Kopen" else None, axis=1)
         df_trades["SAM-% Verkoop"] = df_trades.apply(
-            lambda row: row["Rendement (%)"] if row["Type"] == "Verkopen" else None, axis=1
-        )
+            lambda row: row["Rendement (%)"] if row["Type"] == "Verkopen" else None, axis=1)
         df_trades["Markt-%"] = df_trades.apply(
-            lambda row: round(((row["Sluit prijs"] - row["Open prijs"]) / row["Open prijs"]) * 100, 2),
-            axis=1
-        )
+            lambda row: round(((row["Sluit prijs"] - row["Open prijs"]) / row["Open prijs"]) * 100, 2), axis=1)
         df_trades = df_trades.rename(columns={"Rendement (%)": "SAM-% tot."})
         df_trades = df_trades[
             ["Open datum", "Open prijs", "Sluit datum", "Sluit prijs",
@@ -648,40 +635,38 @@ if trades:
         aantal_trades = len(df_trades)
         aantal_koop = df_trades["SAM-% Koop"].notna().sum()
         aantal_verkoop = df_trades["SAM-% Verkoop"].notna().sum()
+
         rendement_totaal = df_trades["SAM-% tot."].sum()
         rendement_koop = df_trades["SAM-% Koop"].sum(skipna=True)
         rendement_verkoop = df_trades["SAM-% Verkoop"].sum(skipna=True)
+
         aantal_succesvol = (df_trades["SAM-% tot."] > 0).sum()
         aantal_succesvol_koop = (df_trades["SAM-% Koop"] > 0).sum()
         aantal_succesvol_verkoop = (df_trades["SAM-% Verkoop"] > 0).sum()
 
         # 📋 Caption tonen
         st.caption(
-            f"Aantal afgeronde **trades**: **{aantal_trades}**, totaal resultaat SAM-%: **{rendement_totaal:+.2f}%** binnen deze periode, aantal succesvol: **{aantal_succesvol}**"
-        )
+            f"Aantal afgeronde **trades**: **{aantal_trades}**, totaal resultaat SAM-%: **{rendement_totaal:+.2f}%** binnen deze periode, aantal succesvol: **{aantal_succesvol}**")
         st.caption(
-            f"Aantal afgeronde **koop** trades: **{aantal_koop}**, totaal resultaat SAM-% koop: **{rendement_koop:+.2f}%**, aantal succesvol: **{aantal_succesvol_koop}**"
-        )
+            f"Aantal afgeronde **koop** trades: **{aantal_koop}**, totaal resultaat SAM-% koop: **{rendement_koop:+.2f}%**, aantal succesvol: **{aantal_succesvol_koop}**")
         st.caption(
-            f"Aantal afgeronde **verkoop** trades: **{aantal_verkoop}**, totaal resultaat SAM-% verkoop: **{rendement_verkoop:+.2f}%**, aantal succesvol: **{aantal_succesvol_verkoop}**"
-        )
+            f"Aantal afgeronde **verkoop** trades: **{aantal_verkoop}**, totaal resultaat SAM-% verkoop: **{rendement_verkoop:+.2f}%**, aantal succesvol: **{aantal_succesvol_verkoop}**")
 
-        # 🎨 Kleuren
+        # 🎨 Kleurfunctie
         def kleur_positief_negatief(val):
             if pd.isna(val):
-                kleur = "#808080"
+                return "color: #808080"
             elif val > 0:
-                kleur = "#008000"
+                return "color: #008000"
             elif val < 0:
-                kleur = "#FF0000"
+                return "color: #FF0000"
             else:
-                kleur = "#808080"
-            return f"color: {kleur}"
+                return "color: #808080"
 
-        # 🔢 Format & styler
         kleurbare_kolommen = ["Markt-%", "SAM-% tot.", "SAM-% Koop", "SAM-% Verkoop"]
         toon_alle = st.toggle("Toon alle trades", value=False)
         df_display = df_trades if toon_alle or len(df_trades) <= 12 else df_trades.iloc[-12:]
+
         styler = df_display.style.format({col: "{:+.2f}%" for col in kleurbare_kolommen})
         styler = styler.applymap(kleur_positief_negatief, subset=kleurbare_kolommen)
 
@@ -696,13 +681,11 @@ else:
 
 
 
-# wit
 
 
 
 
 
 
- # wit
 
-
+# with
