@@ -609,7 +609,7 @@ if trades:
         lambda row: row["Rendement (%)"] if row["Type"] == "Verkopen" else None, axis=1
     )
     df_trades["Markt-%"] = df_trades.apply(
-        lambda row: ((row["Sluit prijs"] - row["Open prijs"]) / row["Open prijs"]) * 100,
+        lambda row: round(((row["Sluit prijs"] - row["Open prijs"]) / row["Open prijs"]) * 100, 2),
         axis=1
     )
 
