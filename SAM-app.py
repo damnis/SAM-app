@@ -363,8 +363,8 @@ interval_mapping = {
 
 interval = interval_mapping[interval_optie]
 
-
-thresh = st.slider("Gevoeligheid van trendverandering", 0.01, 2.0, 0.5, step=0.01)
+# de gevoeligheid slider
+thresh = st.slider("Gevoeligheid van trendverandering", 0.01, 0.5, 0.1, step=0.02)
 
 # Berekening
 df = fetch_data(ticker, interval)
