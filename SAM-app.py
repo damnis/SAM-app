@@ -444,10 +444,11 @@ tabel["Markt-% weergave"] = tabel["Markt-%"].map("{:+.2f}%".format)
 tabel["SAM-% weergave"] = tabel["SAM-%"].map("{:+.2f}%".format)
 tabel["Trend Weergave"] = tabel["Trend"].map("{:+.3f}%".format)
 
-tabel = tabel[["Datum", "Close", "Advies", "SAM", "Trend", "Markt-% weergave", "SAM-% weergave"]]
+tabel = tabel[["Datum", "Close", "Advies", "SAM", "Trend Weergave", "Markt-% weergave", "SAM-% weergave"]]
 tabel = tabel.rename(columns={
     "Markt-% weergave": "Markt-%",
-    "SAM-% weergave": "SAM-%"
+    "SAM-% weergave": "SAM-%",
+    "Trend Weergave": "Trend"
 })
 
 #tabel["SAM"] = tabel["SAM"].map("{:.2f}".format)
