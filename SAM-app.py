@@ -597,93 +597,79 @@ col1, col2 = st.columns(2)
 col1.metric("Marktrendement (Buy & Hold)", f"{marktrendement:+.2f}%" if marktrendement is not None else "n.v.t.")
 col2.metric("📊 SAM-rendement", f"{sam_rendement:+.2f}%" if isinstance(sam_rendement, (int, float)) else "n.v.t.")
 
+### waarden en tabel captions  vanaf hier
+
 if trades:
-    # 🧮 Aantallen & totalen berekenen
-    aantal_koop = sum(1 for t in trades if t["Type"] == "Kopen")
-    aantal_verkoop = sum(1 for t in trades if t["Type"] == "Verkopen")
-    rendement_koop = sum(t["Rendement (%)"] for t in trades if t["Type"] == "Kopen")
-    rendement_verkoop = sum(t["Rendement (%)"] for t in trades if t["Type"] == "Verkopen")
-    rendement_totaal = sum(t["Rendement (%)"] for t in trades)
+    # 🧮 DataFrame bouwen
+    df_trades = pd.DataFrame(trades)
 
-# 📋 Volledig uitgebreide caption
-    st.caption(
-        f"Aantal afgeronde **trades**: **{len(trades)}**, totaal resultaat SAM-%: **{rendement_totaal:.2f}%** binnen deze periode  \n"
-        f"Aantal afgeronde **koop** trades: **{aantal_koop}**, totaal resultaat SAM-% koop: **{rendement_koop:.2f}%**  \n"
-        f"Aantal afgeronde **verkoop** trades: **{aantal_verkoop}**, totaal resultaat SAM-% verkoop: **{rendement_verkoop:.2f}%**"
+    # 📊 Extra kolommen toevoegen
+    df_trades["SAM-% Koop"] = df_trades.apply(
+        lambda row: row["Rendement (%)"] if row["Type"] == "Kopen" else None, axis=1
     )
-   # st.caption(f"Aantal afgeronde trades: **{len(trades)}** binnen deze periode.")
+    df_trades["SAM-% Verkoop"] = df_trades.apply(
+        lambda row: row["Rendement (%)"] if row["Type"] == "Verkopen" else None, axis=1
+    )
+    df_trades["Markt-%"] = df_trades.apply(
+        lambda row: round(((row["Sluit prijs"] - row["Open prijs"]) / row["Open prijs"]) * 100, 2),
+        axis=1
+    )
+    df_trades = df_trades.rename(columns={"Rendement (%)": "SAM-% tot."})
+    df_trades = df_trades[
+        ["Open datum", "Open prijs", "Sluit datum", "Sluit prijs",
+         "Markt-%", "SAM-% tot.", "SAM-% Koop", "SAM-% Verkoop"]
+    ]
 
+    # 📋 Statistieken berekenen
+    aantal_trades = len(df_trades)
+    aantal_koop = df_trades["SAM-% Koop"].notna().sum()
+    aantal_verkoop = df_trades["SAM-% Verkoop"].notna().sum()
 
-    # trades tabel
-    # ✅ DataFrame bouwen
-df_trades = pd.DataFrame(trades)
+    rendement_totaal = df_trades["SAM-% tot."].sum()
+    rendement_koop = df_trades["SAM-% Koop"].sum(skipna=True)
+    rendement_verkoop = df_trades["SAM-% Verkoop"].sum(skipna=True)
 
-df_trades["SAM-% Koop"] = df_trades.apply(
-    lambda row: row["Rendement (%)"] if row["Type"] == "Kopen" else None, axis=1
-)
-df_trades["SAM-% Verkoop"] = df_trades.apply(
-    lambda row: row["Rendement (%)"] if row["Type"] == "Verkopen" else None, axis=1
-)
-df_trades["Markt-%"] = df_trades.apply(
-    lambda row: round(((row["Sluit prijs"] - row["Open prijs"]) / row["Open prijs"]) * 100, 2),
-    axis=1
-)
+    aantal_succesvol = (df_trades["SAM-% tot."] > 0).sum()
+    aantal_succesvol_koop = (df_trades["SAM-% Koop"] > 0).sum()
+    aantal_succesvol_verkoop = (df_trades["SAM-% Verkoop"] > 0).sum()
 
-df_trades = df_trades.rename(columns={"Rendement (%)": "SAM-% tot."})
-df_trades = df_trades[
-    ["Open datum", "Open prijs", "Sluit datum", "Sluit prijs",
-     "Markt-%", "SAM-% tot.", "SAM-% Koop", "SAM-% Verkoop"]
-]
+    # 📋 Caption tonen (STAP 4 volledig)
+    st.caption(
+        f"Aantal afgeronde **trades**: **{aantal_trades}**, totaal resultaat SAM-%: **{rendement_totaal:+.2f}%** binnen deze periode, aantal succesvol: **{aantal_succesvol}**"
+    )
+    st.caption(
+        f"Aantal afgeronde **koop** trades: **{aantal_koop}**, totaal resultaat SAM-% koop: **{rendement_koop:+.2f}%**, aantal succesvol: **{aantal_succesvol_koop}**"
+    )
+    st.caption(
+        f"Aantal afgeronde **verkoop** trades: **{aantal_verkoop}**, totaal resultaat SAM-% verkoop: **{rendement_verkoop:+.2f}%**, aantal succesvol: **{aantal_succesvol_verkoop}**"
+    )
 
-# ✅ Styler functie voor kleuren
-def kleur_positief_negatief(val):
-    if pd.isna(val):
-        kleur = "#808080"  # grijs
-    elif val > 0:
-        kleur = "#008000"  # groen
-    elif val < 0:
-        kleur = "#FF0000"  # rood
-    else:
-        kleur = "#808080"  # grijs
-    return f"color: {kleur}"
-
-# ✅ Styler toepassen op 4 kolommen
-kleurbare_kolommen = ["Markt-%", "SAM-% tot.", "SAM-% Koop", "SAM-% Verkoop"]
-styler = df_trades.style.format({col: "{:+.2f}%" for col in kleurbare_kolommen})
-styler = styler.applymap(kleur_positief_negatief, subset=kleurbare_kolommen)
-
-# ✅ Weergave in Streamlit
-
-
-# Interactieve toggle
-toon_alle = st.toggle("Toon alle trades", value=False)
-
-# Selecteer volledige of laatste 12 trades
-if toon_alle or len(df_trades) <= 12:
-    df_display = df_trades
-else:
-    df_display = df_trades.iloc[-12:]
-
-# Styling: definieer kleurfunctie
-def kleur_positief_negatief(val):
-    if isinstance(val, (int, float, np.number)):
-        if val > 0:
-            return "color: green"
+    # 🎨 Stylingfunctie voor kleuren
+    def kleur_positief_negatief(val):
+        if pd.isna(val):
+            kleur = "#808080"  # grijs
+        elif val > 0:
+            kleur = "#008000"  # groen
         elif val < 0:
-            return "color: red"
-    return "color: gray"
+            kleur = "#FF0000"  # rood
+        else:
+            kleur = "#808080"  # grijs
+        return f"color: {kleur}"
 
-# Format en kleur alleen relevante kolommen
-kleurbare_kolommen = ["Markt-%", "SAM-% tot.", "SAM-% Koop", "SAM-% Verkoop"]
-styler = df_display.style.format({col: "{:+.2f}%" for col in kleurbare_kolommen})
-styler = styler.applymap(kleur_positief_negatief, subset=kleurbare_kolommen)
+    # 🖌️ Format & styler instellen
+    kleurbare_kolommen = ["Markt-%", "SAM-% tot.", "SAM-% Koop", "SAM-% Verkoop"]
 
-# Tabel tonen
-st.dataframe(styler, use_container_width=True)
+    toon_alle = st.toggle("Toon alle trades", value=False)
+    df_display = df_trades if toon_alle or len(df_trades) <= 12 else df_trades.iloc[-12:]
 
+    styler = df_display.style.format({col: "{:+.2f}%" for col in kleurbare_kolommen})
+    styler = styler.applymap(kleur_positief_negatief, subset=kleurbare_kolommen)
 
+    # 🖥️ Tabel tonen
+    st.dataframe(styler, use_container_width=True)
 
-
+else:
+    st.info("ℹ️ Geen trades gevonden binnen de geselecteerde periode.")
 
 
 
