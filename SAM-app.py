@@ -681,7 +681,7 @@ if trades:
 return
 
     # 🧮 DataFrame bouwen
-    df_trades = pd.DataFrame(trades)
+df_trades = pd.DataFrame(trades)
     
     # 📊 Extra kolommen toevoegen
     df_trades["SAM-% Koop"] = df_trades.apply(
