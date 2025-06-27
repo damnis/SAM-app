@@ -92,7 +92,7 @@ def calculate_sam(df):
     df.loc[df["daily_range"] < avg_range, "SAMD"] = -1
 
     # SAMM
-    df["SAMM"]
+    df["SAMM"] = 0
     # Bereken MACD en signaallijn
     macd = ta.trend.macd(df["Close"], window_slow=26, window_fast=12)
     signal = ta.trend.macd_signal(df["Close"], window_slow=26, window_fast=12, window_sign=9)
