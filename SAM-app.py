@@ -94,11 +94,10 @@ def calculate_sam(df):
     # SAMM
     df["SAMM"] = 0
     # Bereken MACD en signaallijn
-    macd = ta.trend.macd(df["Close"], window_slow=26, window_fast=12)
-    signal = ta.trend.macd_signal(df["Close"], window_slow=26, window_fast=12, window_sign=9)
+    macd_ind = ta.trend.MACD(close=df["Close"], window_slow=26, window_fast=12, window_sign=9)
 
-    df["MACD"] = macd
-    df["SIGNAL"] = signal
+    df["MACD"] = macd_ind.macd()
+    df["SIGNAL"] = macd_ind.macd_signal()
 
     # Verschil voor kruising detectie
     prev_macd = df["MACD"].shift(1)
