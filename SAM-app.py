@@ -442,7 +442,7 @@ tabel["SAM-%"] = tabel["SAM-%"].astype(float) * 100
 # ✅ Daarna afzonderlijke kolommen voor weergave formatteren
 tabel["Markt-% weergave"] = tabel["Markt-%"].map("{:+.2f}%".format)
 tabel["SAM-% weergave"] = tabel["SAM-%"].map("{:+.2f}%".format)
-tabel["Trend Weergave"] = tabel["Trend"].map("{:+.3f}%".format)
+tabel["Trend Weergave"] = tabel["Trend"].map("{:+.3f}".format)
 
 tabel = tabel[["Datum", "Close", "Advies", "SAM", "Trend Weergave", "Markt-% weergave", "SAM-% weergave"]]
 tabel = tabel.rename(columns={
