@@ -613,7 +613,7 @@ def bereken_sam_rendement(df_signalen, signaal_type="Beide", close_col="Close"):
       #      entry_type = advies
        #     entry_price = close
      #       entry_date = datum
-            continue
+   #         continue
 #
 
   #      if entry_type is None:
