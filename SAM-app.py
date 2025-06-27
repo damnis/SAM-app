@@ -591,9 +591,22 @@ def bereken_sam_rendement(df_signalen, signaal_type="Beide", close_col="Close"):
     type_map = {"Koop": "Kopen", "Verkoop": "Verkopen", "Beide": "Beide"}
     mapped_type = type_map.get(signaal_type, "Beide")
 
-    for datum, row in df_signalen.iterrows():
-        advies = row["Advies"]
-        close = row[close_col]
+   # for datum, row in df_signalen.iterrows():
+    #    advies = row["Advies"]
+     #   close = row[close_col]
+
+    for i in range(len(df_signalen)):
+        advies = df_signalen["Advies"].iloc[i]
+        close = df_signalen[close_col].iloc[i]
+        datum = df_signalen.index[i]
+
+        # ✅ STAP 1: Forceer eerste trade bij begin selectie
+        if i == 0 and advies in ["Kopen", "Verkopen"]:
+            entry_type = advies
+            entry_price = close
+            entry_date = datum
+            continue
+
 
         if entry_type is None:
             if mapped_type == "Beide" or advies == mapped_type:
