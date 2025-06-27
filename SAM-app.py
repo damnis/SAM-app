@@ -678,7 +678,7 @@ if trades:
 
     if not trades:
         st.warning("Er zijn geen geldige trades gevonden voor deze selectie.")
-    return
+return
 
     # 🧮 DataFrame bouwen
     df_trades = pd.DataFrame(trades)
