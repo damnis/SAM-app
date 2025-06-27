@@ -98,88 +98,78 @@ def calculate_sam(df):
 def determine_advice(df, threshold):
     df = df.copy()
     df["Trend"] = df["SAM"].rolling(window=3).mean()
-    df["TrendChange"] = df["Trend"] - df["Trend"].shift(1)
+    df["TrendChange"] = df["Trend"].diff()
 
     df["Advies"] = None
     df.loc[df["TrendChange"] > threshold, "Advies"] = "Kopen"
     df.loc[df["TrendChange"] < -threshold, "Advies"] = "Verkopen"
 
-    df["AdviesGroep"] = (df["Advies"] != df["Advies"].shift()).cumsum()
-
     trades = []
     rendementen = []
 
-    entry_type = None
+    vorige_advies = None
     entry_price = None
     entry_date = None
 
-    for idx, row in df.iterrows():
+    for datum, row in df.iterrows():
         advies = row["Advies"]
         close = row["Close"]
 
-        if not isinstance(advies, str):
-            continue
-
-        # Start trade bij eerste signaal
-        if entry_type is None:
-            entry_type = advies
+        if vorige_advies is None and advies in ["Kopen", "Verkopen"]:
+            # Eerste geldige signaal
+            vorige_advies = advies
             entry_price = close
-            entry_date = idx
-            continue
+            entry_date = datum
 
-        # Sluit trade bij nieuw signaal
-        if advies != entry_type:
-            sluit_type = entry_type
+        elif advies is not None and advies != vorige_advies:
+            # Nieuw advies = sluit trade
             sluit_price = close
-            sluit_date = idx
+            sluit_datum = datum
 
-            if sluit_type == "Kopen":
+            if vorige_advies == "Kopen":
                 rendement = (sluit_price - entry_price) / entry_price * 100
             else:
                 rendement = (entry_price - sluit_price) / entry_price * 100
 
             rendementen.append(rendement)
             trades.append({
-                "Type": sluit_type,
-                "Open datum": entry_date.strftime("%d-%m-%Y"),
+                "Type": vorige_advies,
+                "Open datum": entry_date.date(),
                 "Open prijs": round(entry_price, 2),
-                "Sluit datum": sluit_date.strftime("%d-%m-%Y"),
+                "Sluit datum": sluit_datum.date(),
                 "Sluit prijs": round(sluit_price, 2),
                 "Rendement (%)": round(rendement, 2)
             })
 
-            # Open eventueel een nieuwe trade op dit advies
-            entry_type = advies
+            # Start nieuwe trade
+            vorige_advies = advies
             entry_price = close
-            entry_date = idx
+            entry_date = datum
 
-    # Sluit laatste actieve trade op laatste datum (force close)
-    if entry_type is not None:
+    # Sluit openstaande trade geforceerd op einde
+    if entry_price is not None and entry_date is not None and vorige_advies is not None:
         sluit_price = df["Close"].iloc[-1]
-        sluit_date = df.index[-1]
-
-        if entry_type == "Kopen":
+        sluit_datum = df.index[-1]
+        if vorige_advies == "Kopen":
             rendement = (sluit_price - entry_price) / entry_price * 100
         else:
             rendement = (entry_price - sluit_price) / entry_price * 100
 
         rendementen.append(rendement)
         trades.append({
-            "Type": entry_type,
-            "Open datum": entry_date.strftime("%d-%m-%Y"),
+            "Type": vorige_advies,
+            "Open datum": entry_date.date(),
             "Open prijs": round(entry_price, 2),
-            "Sluit datum": sluit_date.strftime("%d-%m-%Y"),
+            "Sluit datum": sluit_datum.date(),
             "Sluit prijs": round(sluit_price, 2),
             "Rendement (%)": round(rendement, 2)
         })
 
+    # Resultaatkolommen vullen (optioneel visueel)
     df["Markt-%"] = 0.0
     df["SAM-%"] = 0.0
-
     for trade in trades:
-        mask = (df.index >= pd.to_datetime(trade["Open datum"], dayfirst=True)) & (
-            df.index <= pd.to_datetime(trade["Sluit datum"], dayfirst=True)
-        )
+        mask = (df.index.date >= trade["Open datum"]) & (df.index.date <= trade["Sluit datum"])
         markt_rendement = ((trade["Sluit prijs"] - trade["Open prijs"]) / trade["Open prijs"]) * 100
         sam_rendement = trade["Rendement (%)"]
         df.loc[mask, "Markt-%"] = markt_rendement
@@ -562,7 +552,7 @@ advies_col = "Advies"
 df_signalen = df_period[df_period[advies_col].isin(["Kopen", "Verkopen"])].copy()
 
 # 📊 3. Backtestfunctie: sluit op close van nieuw signaal
-def bereken_sam_rendement(df_signalen, signaal_type="Beide", close_col="Close"):
+def bereken_sam_rendement(df_signalen, signaal_type="Beide"):
     rendementen = []
     trades = []
     entry_price = None
@@ -574,7 +564,7 @@ def bereken_sam_rendement(df_signalen, signaal_type="Beide", close_col="Close"):
 
     for datum, row in df_signalen.iterrows():
         advies = row["Advies"]
-        close = row[close_col]
+        close = row["Close"]
 
         if entry_type is None:
             if mapped_type == "Beide" or advies == mapped_type:
@@ -583,55 +573,54 @@ def bereken_sam_rendement(df_signalen, signaal_type="Beide", close_col="Close"):
                 entry_date = datum
         else:
             if advies != entry_type and (mapped_type == "Beide" or entry_type == mapped_type):
+                # Sluit trade op nieuwe signaal
                 sluit_datum = datum
                 sluit_close = close
 
-                rendement = (
-                    (sluit_close - entry_price) / entry_price * 100
-                    if entry_type == "Kopen"
-                    else (entry_price - sluit_close) / entry_price * 100
-                )
+                if entry_type == "Kopen":
+                    rendement = (sluit_close - entry_price) / entry_price * 100
+                else:
+                    rendement = (entry_price - sluit_close) / entry_price * 100
 
+                rendementen.append(rendement)
                 trades.append({
                     "Type": entry_type,
-                    "Open datum": entry_date.strftime("%d-%m-%Y"),
+                    "Open datum": entry_date.date(),
                     "Open prijs": round(entry_price, 2),
-                    "Sluit datum": sluit_datum.strftime("%d-%m-%Y"),
+                    "Sluit datum": sluit_datum.date(),
                     "Sluit prijs": round(sluit_close, 2),
                     "Rendement (%)": round(rendement, 2)
                 })
-                rendementen.append(rendement)
 
+                # Eventueel nieuwe trade openen
                 if mapped_type == "Beide" or advies == mapped_type:
                     entry_type = advies
                     entry_price = close
                     entry_date = datum
                 else:
-                    entry_type = entry_price = entry_date = None
+                    entry_type = None
+                    entry_price = None
+                    entry_date = None
 
-    # 🔚 Sluit eventuele open trade aan einde periode
+    # Forceer sluiting op einddatum
+    if entry_type and entry_price is not None:
+        laatste_datum = df_signalen.index[-1]
+        laatste_koers = df_signalen["Close"].iloc[-1]
 
-    if entry_type is not None and entry_price is not None and entry_date is not None:
-        sluit_datum = df_signalen.index[-1]
-        sluit_close = df_signalen[close_col].iloc[-1]
+        if entry_type == "Kopen":
+            rendement = (laatste_koers - entry_price) / entry_price * 100
+        else:
+            rendement = (entry_price - laatste_koers) / entry_price * 100
 
-
-    rendement = (
-        (sluit_close - entry_price) / entry_price * 100
-        if entry_type == "Kopen"
-        else (entry_price - sluit_close) / entry_price * 100
-    )
-
-    rendementen.append(rendement)
-    trades.append({
-        "Type": entry_type,
-        "Open datum": entry_date.strftime("%d-%m-%Y"),
-        "Open prijs": round(entry_price, 2),
-        "Sluit datum": sluit_datum.strftime("%d-%m-%Y"),
-        "Sluit prijs": round(sluit_close, 2),
-        "Rendement (%)": round(rendement, 2),
-        "Gesloten aan eind": True  # optioneel label
-    })
+        rendementen.append(rendement)
+        trades.append({
+            "Type": entry_type,
+            "Open datum": entry_date.date(),
+            "Open prijs": round(entry_price, 2),
+            "Sluit datum": laatste_datum.date(),
+            "Sluit prijs": round(laatste_koers, 2),
+            "Rendement (%)": round(rendement, 2)
+        })
 
     sam_rendement = sum(rendementen) if rendementen else 0.0
     return sam_rendement, trades, rendementen
