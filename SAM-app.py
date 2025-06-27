@@ -653,25 +653,33 @@ styler = df_trades.style.format({col: "{:+.2f}%" for col in kleurbare_kolommen})
 styler = styler.applymap(kleur_positief_negatief, subset=kleurbare_kolommen)
 
 # ✅ Weergave in Streamlit
-# Toon juiste subset van de dataframe (voor styling!)
+
+
+# Interactieve toggle
+toon_alle = st.toggle("Toon alle trades", value=False)
+
+# Selecteer volledige of laatste 12 trades
 if toon_alle or len(df_trades) <= 12:
     df_display = df_trades
 else:
     df_display = df_trades.iloc[-12:]
 
-# ✅ Styling pas toepassen NA selectie van de juiste rijen
+# Styling: definieer kleurfunctie
+def kleur_positief_negatief(val):
+    if isinstance(val, (int, float, np.number)):
+        if val > 0:
+            return "color: green"
+        elif val < 0:
+            return "color: red"
+    return "color: gray"
+
+# Format en kleur alleen relevante kolommen
 kleurbare_kolommen = ["Markt-%", "SAM-% tot.", "SAM-% Koop", "SAM-% Verkoop"]
 styler = df_display.style.format({col: "{:+.2f}%" for col in kleurbare_kolommen})
 styler = styler.applymap(kleur_positief_negatief, subset=kleurbare_kolommen)
 
-# ✅ Weergave
+# Tabel tonen
 st.dataframe(styler, use_container_width=True)
-#toon_alle = st.toggle("Toon alle trades", value=False)
-#if toon_alle or len(df_trades) <= 12:
-#    st.dataframe(styler, use_container_width=True)
-#else:
-#    st.dataframe(styler.iloc[-12:], use_container_width=True)
-
 
 
 
