@@ -59,8 +59,8 @@ def calculate_sam(df):
 
     # Basiskolommen
     # --- SAMK op basis van candlestick-patronen ---
+#    df["SAMK"] = 0.0
     df["SAMK"] = 0.0
-
     c1 = df["Close"] > df["Open"]
     c2 = df["Close"].shift(1) > df["Open"].shift(1)
     c3 = df["Close"] > df["Close"].shift(1)
