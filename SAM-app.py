@@ -130,29 +130,7 @@ def calculate_sam(df):
     df["SAM"] = df[["SAMK", "SAMG", "SAMT", "SAMD", "SAMM", "SAMX"]].sum(axis=1)
 
     return df
-    # debugging tools
-    with st.expander("🔍 Debug: SAM-componenten per dag (laatste 10 dagen)"):
-        sam_debug_cols = ["Date", "Close", "SAMK", "SAMG", "SAMT", "SAMD", "SAMM", "SAMX", "SAM"]
     
-        # Voeg datum als kolom toe als index datetime is
-        df_debug = df.copy()
-        if isinstance(df_debug.index, pd.DatetimeIndex):
-            df_debug = df_debug.reset_index().rename(columns={"index": "Date"})
-
-        st.dataframe(
-            df_debug[sam_debug_cols].tail(10).style.format({
-                "Close": "{:.2f}",
-                "SAMK": "{:+.2f}",
-                "SAMG": "{:+.2f}",
-                "SAMT": "{:+.2f}",
-                "SAMD": "{:+.2f}",
-                "SAMM": "{:+.2f}",
-                "SAMX": "{:+.2f}",
-                "SAM": "{:+.2f}"
-            }),
-            use_container_width=True
-        )
-
 
 # --- Advies en rendementen ---
 def determine_advice(df, threshold):
@@ -788,27 +766,14 @@ else:
     st.info("ℹ️ Geen trades gevonden binnen de geselecteerde periode.")
     
     # debugging tools
-    with st.expander("🔍 Debug: SAM-componenten per dag (laatste 10 dagen)"):
-        sam_debug_cols = ["Date", "Close", "SAMK", "SAMG", "SAMT", "SAMD", "SAMM", "SAMX", "SAM"]
-    
-        # Voeg datum als kolom toe als index datetime is
-        df_debug = df.copy()
-        if isinstance(df_debug.index, pd.DatetimeIndex):
-            df_debug = df_debug.reset_index().rename(columns={"index": "Date"})
-
-        st.dataframe(
-            df_debug[sam_debug_cols].tail(10).style.format({
-                "Close": "{:.2f}",
-                "SAMK": "{:+.2f}",
-                "SAMG": "{:+.2f}",
-                "SAMT": "{:+.2f}",
-                "SAMD": "{:+.2f}",
-                "SAMM": "{:+.2f}",
-                "SAMX": "{:+.2f}",
-                "SAM": "{:+.2f}"
-            }),
-            use_container_width=True
-        )
+    st.caption(f"SAM-componenten gemiddeld: "
+           f"SAMK={df['SAMK'].mean():+.2f}, "
+           f"SAMG={df['SAMG'].mean():+.2f}, "
+           f"SAMT={df['SAMT'].mean():+.2f}, "
+           f"SAMD={df['SAMD'].mean():+.2f}, "
+           f"SAMM={df['SAMM'].mean():+.2f}, "
+           f"SAMX={df['SAMX'].mean():+.2f}, "
+           f"SAM totaal={df['SAM'].mean():+.2f}")
 
 
 
