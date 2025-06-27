@@ -599,18 +599,18 @@ col2.metric("📊 SAM-rendement", f"{sam_rendement:+.2f}%" if isinstance(sam_ren
 
 if trades:
     # 🧮 Aantallen & totalen berekenen
-aantal_koop = sum(1 for t in trades if t["Type"] == "Kopen")
-aantal_verkoop = sum(1 for t in trades if t["Type"] == "Verkopen")
-rendement_koop = sum(t["Rendement (%)"] for t in trades if t["Type"] == "Kopen")
-rendement_verkoop = sum(t["Rendement (%)"] for t in trades if t["Type"] == "Verkopen")
-rendement_totaal = sum(t["Rendement (%)"] for t in trades)
+    aantal_koop = sum(1 for t in trades if t["Type"] == "Kopen")
+    aantal_verkoop = sum(1 for t in trades if t["Type"] == "Verkopen")
+    rendement_koop = sum(t["Rendement (%)"] for t in trades if t["Type"] == "Kopen")
+    rendement_verkoop = sum(t["Rendement (%)"] for t in trades if t["Type"] == "Verkopen")
+    rendement_totaal = sum(t["Rendement (%)"] for t in trades)
 
 # 📋 Volledig uitgebreide caption
-st.caption(
-    f"Aantal afgeronde **trades**: **{len(trades)}**, totaal resultaat SAM-%: **{rendement_totaal:.2f}%** binnen deze periode  \n"
-    f"Aantal afgeronde **koop** trades: **{aantal_koop}**, totaal resultaat SAM-% koop: **{rendement_koop:.2f}%**  \n"
-    f"Aantal afgeronde **verkoop** trades: **{aantal_verkoop}**, totaal resultaat SAM-% verkoop: **{rendement_verkoop:.2f}%**"
-)
+    st.caption(
+        f"Aantal afgeronde **trades**: **{len(trades)}**, totaal resultaat SAM-%: **{rendement_totaal:.2f}%** binnen deze periode  \n"
+        f"Aantal afgeronde **koop** trades: **{aantal_koop}**, totaal resultaat SAM-% koop: **{rendement_koop:.2f}%**  \n"
+        f"Aantal afgeronde **verkoop** trades: **{aantal_verkoop}**, totaal resultaat SAM-% verkoop: **{rendement_verkoop:.2f}%**"
+    )
    # st.caption(f"Aantal afgeronde trades: **{len(trades)}** binnen deze periode.")
 
 
