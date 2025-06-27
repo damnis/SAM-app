@@ -72,6 +72,9 @@ def calculate_sam(df):
     df.loc[(df["c1"] & df["c6"] & df["c7"]).fillna(False), "SAMK"] = -1
 
     # --- SAMG op basis van Weighted Moving Averages + Crossovers ---
+    def weighted_moving_average(series, window):
+        weights = np.arange(1, window + 1)
+        return series.rolling(window).apply(lambda x: np.dot(x, weights)/weights.sum(), raw=True)
     # --- SAMG (WMA-based trendanalyse met crossovers) ---
     df["WMA18"] = weighted_moving_average(df["Close"], 18)
     df["WMA35"] = weighted_moving_average(df["Close"], 35)
