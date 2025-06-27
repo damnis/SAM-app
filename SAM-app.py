@@ -763,6 +763,28 @@ if trades:
     st.dataframe(styler, use_container_width=True)
 else:
     st.info("ℹ️ Geen trades gevonden binnen de geselecteerde periode.")
+    # debugging tools
+    with st.expander("🔍 Debug: SAM-componenten per dag (laatste 10 dagen)"):
+    sam_debug_cols = ["Date", "Close", "SAMK", "SAMG", "SAMT", "SAMD", "SAMM", "SAMX", "SAM"]
+    
+    # Voeg datum als kolom toe als index datetime is
+    df_debug = df.copy()
+    if isinstance(df_debug.index, pd.DatetimeIndex):
+        df_debug = df_debug.reset_index().rename(columns={"index": "Date"})
+
+    st.dataframe(
+        df_debug[sam_debug_cols].tail(10).style.format({
+            "Close": "{:.2f}",
+            "SAMK": "{:+.2f}",
+            "SAMG": "{:+.2f}",
+            "SAMT": "{:+.2f}",
+            "SAMD": "{:+.2f}",
+            "SAMM": "{:+.2f}",
+            "SAMX": "{:+.2f}",
+            "SAM": "{:+.2f}"
+        }),
+        use_container_width=True
+    )
 
 
 
