@@ -115,7 +115,8 @@ def determine_advice(df, threshold):
         advies = row["Advies"]
         close = row["Close"]
 
-        if vorige_advies is None and advies in ["Kopen", "Verkopen"]:
+        if vorige_advies is None and isinstance(advies, str) and advies in ["Kopen", "Verkopen"]:
+        #if vorige_advies is None and advies in ["Kopen", "Verkopen"]:
             # Eerste geldige signaal
             vorige_advies = advies
             entry_price = close
