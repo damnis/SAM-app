@@ -512,121 +512,7 @@ html += "</tbody></table>"
 #Weergave in Streamlit
 st.markdown(html, unsafe_allow_html=True)
 
-###--- Toevoeging: Backtestfunctie ---
 
-from datetime import date
-import pandas as pd
-import streamlit as st
-
-# ✅ Zorg dat de index datetime is
-df = df.copy()
-df.index = pd.to_datetime(df.index)
-
-# 🗓️ 1. Datumkeuze
-st.subheader("Vergelijk Marktrendement en SAM-rendement")
-
-# ⏱️ Aangepaste startdatum = 1 januari huidig jaar
-current_year = date.today().year
-default_start = date(current_year, 1, 1)
-default_end = df.index.max().date()
-
-start_date = st.date_input("Startdatum analyse", default_start)
-end_date = st.date_input("Einddatum analyse", default_end)
-
-# 📅 2. Filter op periode
-df_period = df.loc[
-    (df.index.date >= start_date) & (df.index.date <= end_date)
-].copy()
-
-# 🧹 Flatten MultiIndex indien nodig
-if isinstance(df_period.columns, pd.MultiIndex):
-    df_period.columns = [
-        "_".join([str(i) for i in col if i]) for col in df_period.columns
-    ]
-
-# 🔍 Zoek geldige 'Close'-kolom
-close_col = next(
-    (col for col in df_period.columns if col.lower().startswith("close")), None
-)
-
-if not close_col:
-    st.error("❌ Geen geldige 'Close'-kolom gevonden in deze dataset.")
-    st.stop()
-
-# 📈 Marktrendement (Buy & Hold)
-df_period[close_col] = pd.to_numeric(df_period[close_col], errors="coerce")
-df_valid = df_period[close_col].dropna()
-
-marktrendement = None
-if len(df_valid) >= 2 and df_valid.iloc[0] != 0.0:
-    koers_start = df_valid.iloc[0]
-    koers_eind = df_valid.iloc[-1]
-    marktrendement = ((koers_eind - koers_start) / koers_start) * 100
-
-# ✅ Signaalkeuze geforceerd op Beide
-signaalkeuze = "Beide"
-
-# 🎯 Filter alleen op Kopen/Verkopen
-advies_col = "Advies"
-df_signalen = df_period[df_period[advies_col].isin(["Kopen", "Verkopen"])].copy()
-
-# 📊 3. Backtestfunctie: sluit op close van nieuw signaal
-def bereken_sam_rendement(df_signalen, signaaltype, close_col):
-    rendementen = []
-    trades = []
-
-    entry_type = None
-    entry_price = None
-    entry_date = None
-
-    for i in range(len(df_signalen)):
-        advies = df_signalen["Advies"].iloc[i]
-        close = df_signalen[close_col].iloc[i]
-        datum = df_signalen.index[i]
-
-        # ✅ FORCEER STARTTRADE
-        if i == 0 and advies in ["Kopen", "Verkopen"]:
-            entry_type = advies
-            entry_price = close
-            entry_date = datum
-            continue
-
-        # ✅ TRADE WISSELEN OP ADVIESWIJZIGING
-        if entry_type and advies != entry_type and advies in ["Kopen", "Verkopen"]:
-            sluit_close = close
-            sluit_datum = datum
-
-            rendement = ((sluit_close - entry_price) / entry_price * 100
-                         if entry_type == "Kopen"
-                         else (entry_price - sluit_close) / entry_price * 100)
-
-            rendementen.append(rendement)
-            trades.append({
-                "Type": entry_type,
-                "Open datum": entry_date.date(),
-                "Open prijs": round(entry_price, 2),
-                "Sluit datum": sluit_datum.date(),
-                "Sluit prijs": round(sluit_close, 2),
-                "Rendement (%)": round(rendement, 2)
-            })
-
-            # Nieuwe entry opbouwen
-            entry_type = advies
-            entry_price = close
-            entry_date = datum
-
-    # ✅ SLUIT EVENTUEEL OPENENDE LAATSTE TRADE AFGEDWONGEN OP EINDDATUM
-    if entry_type and entry_price is not None:
-        laatste_datum = df_signalen.index[-1]
-        laatste_koers = df_signalen[close_col].iloc[-1]
-
-        rendement = ((laatste_koers - entry_price) / entry_price * 100
-                     if entry_type == "Kopen"
-                     else (entry_price - laatste_koers) / entry_price * 100)
-
-        rendementen.append(rendement)
-        trades.append({
-            "Type": entry_type,
 # 📊 3. Backtestfunctie: sluit op close van nieuw signaal
 def bereken_sam_rendement(df_signalen, signaaltype, close_col):
     rendementen = []
@@ -794,7 +680,6 @@ if trades:
         st.dataframe(styler, use_container_width=True)
 else:
     st.info("ℹ️ Geen trades gevonden binnen de geselecteerde periode.")
-
 
 
 
