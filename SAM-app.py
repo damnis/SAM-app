@@ -398,7 +398,7 @@ df = calculate_sam(df)
 df, huidig_advies = determine_advice(df, threshold=thresh)
 #df, huidig_advies = determine_advice(df, threshold=thresh)
 # debugging tools
-    st.caption(f"SAM-componenten gemiddeld: "
+st.caption(f"SAM-componenten gemiddeld: "
            f"SAMK={df['SAMK'].mean():+.2f}, "
            f"SAMG={df['SAMG'].mean():+.2f}, "
            f"SAMT={df['SAMT'].mean():+.2f}, "
