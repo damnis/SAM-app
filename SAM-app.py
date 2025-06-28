@@ -155,11 +155,33 @@ def calculate_sam(df):
     df.loc[df["SMA5"] < df["SMA20"], "SAMT"] = -1
 
     # SAMD
-    df["daily_range"] = df["High"] - df["Low"]
-    avg_range = df["daily_range"].rolling(window=14).mean()
-    df["SAMD"] = 0
-    df.loc[df["daily_range"] > avg_range, "SAMD"] = 1
-    df.loc[df["daily_range"] < avg_range, "SAMD"] = -1
+    from ta.trend import ADXIndicator
+
+    # Maak ADXIndicator object aan
+    adx = ADXIndicator(high=df["High"], low=df["Low"], close=df["Close"], window=14)
+
+    # Haal DI+ en DI- op
+    di_plus = adx.adx_pos()
+    di_minus = adx.adx_neg()
+
+    # Bereken het verschil
+    di_diff = di_plus - di_minus
+
+    # SAMD initialiseren
+    df["SAMD"] = 0.0
+
+    # Toekenning volgens jouw nieuwe logica
+    df.loc[(di_plus > 0) & (di_minus == 0), "SAMD"] = 1.0
+    df.loc[(di_minus > 0) & (di_plus == 0), "SAMD"] = -1.0
+    df.loc[(di_diff > 0) & (di_minus > 0) & (di_plus > 0), "SAMD"] = 0.5
+    df.loc[(di_diff < 0) & (di_minus > 0) & (di_plus > 0), "SAMD"] = -0.5
+
+    # samd oud
+#    df["daily_range"] = df["High"] - df["Low"]
+ #   avg_range = df["daily_range"].rolling(window=14).mean()
+#    df["SAMD"] = 0
+#    df.loc[df["daily_range"] > avg_range, "SAMD"] = 1
+#    df.loc[df["daily_range"] < avg_range, "SAMD"] = -1
 
     # SAMM
     # ✅ Correcte MACD-berekening met ta
