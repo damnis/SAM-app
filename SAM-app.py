@@ -174,13 +174,18 @@ def calculate_sam(df):
 
     df["DI_PLUS"] = adx.adx_pos()
     df["DI_MINUS"] = adx.adx_neg()
-    df["SAMD"] = 0.0
+    df["SAMD"] = 0.0  # begin met 0.0
 
+    # 1. Uitsluitend DI+ actief
     df.loc[(df["DI_PLUS"] > 0) & (df["DI_MINUS"] == 0), "SAMD"] = 1.0
+    # 2. Uitsluitend DI- actief
     df.loc[(df["DI_MINUS"] > 0) & (df["DI_PLUS"] == 0), "SAMD"] = -1.0
+    # 3. Beide > 0, maar DI+ sterker
     df.loc[(df["DI_PLUS"] > df["DI_MINUS"]) & (df["DI_MINUS"] > 0), "SAMD"] = 0.5
+    # 4. Beide > 0, maar DI- sterker
     df.loc[(df["DI_MINUS"] > df["DI_PLUS"]) & (df["DI_PLUS"] > 0), "SAMD"] = -0.5
-
+    # 5. Beide exact gelijk en > 0 → neutraal maar actief
+    df.loc[(df["DI_PLUS"] == df["DI_MINUS"]) & (df["DI_PLUS"] > 0), "SAMD"] = 0.0  # expliciet
     
     # samd oud
 #    df["daily_range"] = df["High"] - df["Low"]
