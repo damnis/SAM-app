@@ -157,11 +157,17 @@ def calculate_sam(df):
     # SAMD
     from ta.trend import ADXIndicator
     adx = ADXIndicator(
-    high=df["High"].squeeze(), 
-    low=df["Low"].squeeze(), 
-    close=df["Close"].squeeze(), 
+    high=pd.Series(df["High"].values, index=df.index),
+    low=pd.Series(df["Low"].values, index=df.index),
+    close=pd.Series(df["Close"].values, index=df.index),
     window=14
-)
+    )
+#    adx = ADXIndicator(
+#    high=df["High"].squeeze(), 
+#    low=df["Low"].squeeze(), 
+#    close=df["Close"].squeeze(), 
+#    window=14
+#)
     # Maak ADXIndicator object aan
     adx = ADXIndicator(high=df["High"], low=df["Low"], close=df["Close"], window=14)
 
