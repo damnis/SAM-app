@@ -5,6 +5,7 @@ import ta
 import numpy as np
 import matplotlib.pyplot as plt
 from ta.trend import ADXIndicator
+from ta.momentum import TRIXIndicator
 
 # --- Functie om data op te halen ---
 def fetch_data(ticker, interval):
@@ -279,7 +280,7 @@ def calculate_sam(df):
  #   df.loc[df["SMA10"] < df["SMA50"], "SAMM"] = -1
 
     # SAMX
-    from ta.momentum import TRIXIndicator
+#    from ta.momentum import TRIXIndicator
 
     # --- SAMX op basis van TRIX ---
     close_series = df["Close"].squeeze()
