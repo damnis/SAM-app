@@ -3,4 +3,4 @@ pandas
 numpy
 matplotlib
 yfinance
-ta
+ta==0.10.2
