@@ -156,37 +156,27 @@ def calculate_sam(df):
 
     # SAMD
     from ta.trend import ADXIndicator
-    adx = ADXIndicator(
-    high=pd.Series(df["High"].values, index=df.index),
-    low=pd.Series(df["Low"].values, index=df.index),
-    close=pd.Series(df["Close"].values, index=df.index),
-    window=14
-    )
-#    adx = ADXIndicator(
-#    high=df["High"].squeeze(), 
-#    low=df["Low"].squeeze(), 
-#    close=df["Close"].squeeze(), 
-#    window=14
-#)
-    # Maak ADXIndicator object aan
+
+  #  adx = ADXIndicator(
+  #  high=df["High"].squeeze(), 
+ #   low=df["Low"].squeeze(), 
+  #  close=df["Close"].squeeze(), 
+  #  window=14
+)
+    
+    # --- SAMD op basis van DI+ en DI- ---
     adx = ADXIndicator(high=df["High"], low=df["Low"], close=df["Close"], window=14)
 
-    # Haal DI+ en DI- op
-    di_plus = adx.adx_pos()
-    di_minus = adx.adx_neg()
+    di_plus = adx.adx_pos().squeeze()
+    di_minus = adx.adx_neg().squeeze()
 
-    # Bereken het verschil
-    di_diff = di_plus - di_minus
+    df["SAMD"] = 0.0  # standaardwaarde
 
-    # SAMD initialiseren
-    df["SAMD"] = 0.0
-
-    # Toekenning volgens jouw nieuwe logica
     df.loc[(di_plus > 0) & (di_minus == 0), "SAMD"] = 1.0
     df.loc[(di_minus > 0) & (di_plus == 0), "SAMD"] = -1.0
-    df.loc[(di_diff > 0) & (di_minus > 0) & (di_plus > 0), "SAMD"] = 0.5
-    df.loc[(di_diff < 0) & (di_minus > 0) & (di_plus > 0), "SAMD"] = -0.5
-
+    df.loc[(di_plus > di_minus) & (di_minus > 0), "SAMD"] = 0.5
+    df.loc[(di_minus > di_plus) & (di_plus > 0), "SAMD"] = -0.5
+    
     # samd oud
 #    df["daily_range"] = df["High"] - df["Low"]
  #   avg_range = df["daily_range"].rolling(window=14).mean()
