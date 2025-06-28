@@ -72,21 +72,50 @@ def calculate_sam(df):
     df["c7"] = df["Close"] < df["Close"].shift(1)
     df["c8"] = df["Close"].shift(1) < df["Close"].shift(2)
 
-    # Initieel alles op 0
-    df["SAMK"] = 0.0
+    df["SAMK"] = 0.0  # standaard
 
-     # Positieve patronen
-    df.loc[(df["c1"] & df["c2"] & df["c3"] & df["c4"]).fillna(False), "SAMK"] = 1.25
-    df.loc[(df["c1"] & df["c3"] & df["c4"]).fillna(False), "SAMK"] = 1.0
-    df.loc[(df["c1"] & df["c3"]).fillna(False), "SAMK"] = 0.5
-    df.loc[(df["c1"] | df["c3"]).fillna(False), "SAMK"] = 0.25
+    # Positieve patronen
+    df.loc[
+        (df["SAMK"] == 0.0) & (df["c1"] & df["c2"] & df["c3"] & df["c4"]).fillna(False),
+        "SAMK"
+    ] = 1.25
+
+    df.loc[
+        (df["SAMK"] == 0.0) & (df["c1"] & df["c3"] & df["c4"]).fillna(False),
+        "SAMK"
+    ] = 1.0
+
+    df.loc[
+        (df["SAMK"] == 0.0) & (df["c1"] & df["c3"]).fillna(False),
+        "SAMK"
+    ] = 0.5
+
+    df.loc[
+        (df["SAMK"] == 0.0) & (df["c1"] | df["c3"]).fillna(False),
+        "SAMK"
+    ] = 0.25
 
     # Negatieve patronen
-    df.loc[(df["c5"] & df["c6"] & df["c7"] & df["c8"]).fillna(False), "SAMK"] = -1.25
-    df.loc[(df["c5"] & df["c7"] & df["c8"]).fillna(False), "SAMK"] = -1.0
-    df.loc[(df["c5"] & df["c7"]).fillna(False), "SAMK"] = -0.5
-    df.loc[(df["c5"] | df["c7"]).fillna(False), "SAMK"] = -0.25
+    df.loc[
+        (df["SAMK"] == 0.0) & (df["c5"] & df["c6"] & df["c7"] & df["c8"]).fillna(False),
+        "SAMK"
+    ] = -1.25
 
+    df.loc[
+        (df["SAMK"] == 0.0) & (df["c5"] & df["c7"] & df["c8"]).fillna(False),
+        "SAMK"
+    ] = -1.0
+
+    df.loc[
+        (df["SAMK"] == 0.0) & (df["c5"] & df["c7"]).fillna(False),
+        "SAMK"
+    ] = -0.5
+
+    df.loc[
+        (df["SAMK"] == 0.0) & (df["c5"] | df["c7"]).fillna(False),
+        "SAMK"
+    ] = -0.25
+    
 #    df["c1"] = df["Close"] > df["Open"]
 #    df["c2"] = df["Close"].shift(1) > df["Open"].shift(1)
 #    df["c3"] = df["Close"].shift(2) > df["Open"].shift(2)
