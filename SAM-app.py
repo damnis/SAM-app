@@ -162,7 +162,7 @@ def calculate_sam(df):
  #   low=df["Low"].squeeze(), 
   #  close=df["Close"].squeeze(), 
   #  window=14
-)
+#)
     
     # --- SAMD op basis van DI+ en DI- ---
     adx = ADXIndicator(high=df["High"], low=df["Low"], close=df["Close"], window=14)
