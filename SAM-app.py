@@ -4,12 +4,10 @@ import pandas as pd
 import ta
 import numpy as np
 import matplotlib.pyplot as plt
+from ta.trend import ADXIndicator
 
 # --- Functie om data op te halen ---
 def fetch_data(ticker, interval):
-    import yfinance as yf
-    import pandas as pd
-
     # Intervalspecifieke periode instellen
     if interval == "15m":
         period = "30d"
@@ -58,6 +56,11 @@ def calculate_sam(df):
     df = df.copy()
 
     # Basiskolommen
+    # --- SAMG op basis van Weighted Moving Averages + Crossovers nodig ---
+    def weighted_moving_average(series, window):
+        weights = np.arange(1, window + 1)
+        return series.rolling(window).apply(lambda x: np.dot(x, weights)/weights.sum(), raw=True)
+    
     # --- SAMK: candlestick score op basis van patronen Open/Close ---
 
     df["c1"] = df["Close"] > df["Open"]
@@ -97,10 +100,6 @@ def calculate_sam(df):
 #    df.loc[(df["c1"] & df["c2"] & df["c3"] & df["c4"]).fillna(False), "SAMK"] = 1.25
  #   df.loc[(df["c1"] & df["c6"] & df["c7"]).fillna(False), "SAMK"] = -1
 
-    # --- SAMG op basis van Weighted Moving Averages + Crossovers ---
-    def weighted_moving_average(series, window):
-        weights = np.arange(1, window + 1)
-        return series.rolling(window).apply(lambda x: np.dot(x, weights)/weights.sum(), raw=True)
     # --- SAMG (WMA-based trendanalyse met crossovers) ---
     df["WMA18"] = weighted_moving_average(df["Close"], 18)
     df["WMA35"] = weighted_moving_average(df["Close"], 35)
@@ -147,23 +146,44 @@ def calculate_sam(df):
 #    df.loc[df["Change"] > 0.03, "SAMG"] = 1
 #    df.loc[df["Change"] < -0.03, "SAMG"] = -1
 
-    # SAMT
-    df["SMA5"] = df["Close"].rolling(window=5).mean()
-    df["SMA20"] = df["Close"].rolling(window=20).mean()
-    df["SAMT"] = 0
-    df.loc[df["SMA5"] > df["SMA20"], "SAMT"] = 1
-    df.loc[df["SMA5"] < df["SMA20"], "SAMT"] = -1
+    # SAMT oud
+#    df["SMA5"] = df["Close"].rolling(window=5).mean()
+#    df["SMA20"] = df["Close"].rolling(window=20).mean()
+#    df["SAMT"] = 0
+ #   df.loc[df["SMA5"] > df["SMA20"], "SAMT"] = 1
+#    df.loc[df["SMA5"] < df["SMA20"], "SAMT"] = -1
+# --- SAMT op basis van Weighted Moving Averages 6 en 80 ---
+#    def weighted_moving_average(series, window): --> al eerder gedefineerd
+ #       weights = np.arange(1, window + 1)
+  #      return series.rolling(window).apply(lambda x: np.dot(x, weights)/weights.sum(), raw=True)
 
-    # SAMD
-    from ta.trend import ADXIndicator
+    df["WMA6"] = weighted_moving_average(df["Close"], 6)
+    df["WMA6_shifted"] = df["WMA6"].shift(1)
+    df["WMA80"] = weighted_moving_average(df["Close"], 80)
 
-  #  adx = ADXIndicator(
-  #  high=df["High"].squeeze(), 
- #   low=df["Low"].squeeze(), 
-  #  close=df["Close"].squeeze(), 
-  #  window=14
-#)
+    df["SAMT"] = 0.0  # standaardwaarde
+
+    df.loc[
+        (df["WMA6"] > df["WMA6_shifted"]) & (df["WMA6"] > df["WMA80"]),
+        "SAMT"
+    ] = 0.5
+
+    df.loc[
+        (df["WMA6"] > df["WMA6_shifted"]) & (df["WMA6"] <= df["WMA80"]),
+        "SAMT"
+    ] = 0.25
+
+    df.loc[
+        (df["WMA6"] <= df["WMA6_shifted"]) & (df["WMA6"] <= df["WMA80"]),
+        "SAMT"
+    ] = -0.75
+
+    df.loc[
+        (df["WMA6"] <= df["WMA6_shifted"]) & (df["WMA6"] > df["WMA80"]),
+        "SAMT"
+    ] = -0.5
     
+    # SAMD
     # --- SAMD op basis van DI+ en DI- ---
     high_series = df["High"].squeeze()
     low_series = df["Low"].squeeze()
