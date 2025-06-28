@@ -7,6 +7,8 @@ import matplotlib.pyplot as plt
 from ta.trend import ADXIndicator
 from ta.momentum import TRIXIndicator
 
+print("TA version:", ta.__version__)
+
 # --- Functie om data op te halen ---
 def fetch_data(ticker, interval):
     # Intervalspecifieke periode instellen
