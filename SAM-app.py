@@ -16,9 +16,9 @@ def fetch_data(ticker, interval):
     elif interval == "4h":
         period = "360d"
     elif interval == "1d":
-        period = "7200d"
+        period = "20y"
     else:
-        period = "1200wk"
+        period = "25y"
 
     # Data ophalen
     df = yf.download(ticker, interval=interval, period=period)
