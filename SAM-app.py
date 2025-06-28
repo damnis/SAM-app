@@ -525,7 +525,7 @@ df, huidig_advies = determine_advice(df, threshold=thresh)
 # debugging tools
 st.subheader("🔍 SAM Debug-tabel (laatste 8 rijen)")
 st.dataframe(
-    df[["SAMK", "SAMG", "SAMT", "SAMD", "SAMM", "SAMX", "SAM"]].tail(180),
+    df[["Close", "SAMK", "SAMG", "SAMT", "SAMD", "SAMM", "SAMX", "SAM"]].tail(180),
     use_container_width=True
 )
 #st.caption(f"SAM-componenten gemiddeld: "
