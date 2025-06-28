@@ -34,6 +34,10 @@ def fetch_data(ticker, interval):
         df.index = pd.to_datetime(df.index, errors="coerce")
     df = df[~df.index.isna()]
 
+    # Vul ontbrekende waarden op met vorige/volgende geldige waarde
+    for col in ["Close", "Open", "High", "Low", "Volume"]:
+        df[col] = df[col].fillna(method="ffill").fillna(method="bfill")
+
     return df
 
 from datetime import timedelta
