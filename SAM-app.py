@@ -279,10 +279,33 @@ def calculate_sam(df):
  #   df.loc[df["SMA10"] < df["SMA50"], "SAMM"] = -1
 
     # SAMX
-    df["Momentum"] = df["Close"] - df["Close"].shift(3)
-    df["SAMX"] = 0
-    df.loc[df["Momentum"] > 0, "SAMX"] = 1
-    df.loc[df["Momentum"] < 0, "SAMX"] = -1
+    from ta.momentum import TRIXIndicator
+
+    # --- SAMX op basis van TRIX ---
+    close_series = df["Close"].squeeze()
+    trix_ind = TRIXIndicator(close=close_series, window=15)
+
+    df["TRIX"] = trix_ind.trix()
+    df["TRIX_PREV"] = df["TRIX"].shift(1)
+    df["SAMX"] = 0.0  # Standaardwaarde
+
+    # Sterke opwaartse trend
+    df.loc[(df["TRIX"] > 0) & (df["TRIX"] > df["TRIX_PREV"]), "SAMX"] = 0.75
+
+    # Zwakke opwaartse trend
+    df.loc[(df["TRIX"] > 0) & (df["TRIX"] <= df["TRIX_PREV"]), "SAMX"] = 0.5
+
+    # Sterke neerwaartse trend
+    df.loc[(df["TRIX"] < 0) & (df["TRIX"] < df["TRIX_PREV"]), "SAMX"] = -0.75
+
+    # Zwakke neerwaartse trend
+    df.loc[(df["TRIX"] < 0) & (df["TRIX"] >= df["TRIX_PREV"]), "SAMX"] = -0.5
+
+    # SAMX OUD
+#    df["Momentum"] = df["Close"] - df["Close"].shift(3)
+#    df["SAMX"] = 0
+#    df.loc[df["Momentum"] > 0, "SAMX"] = 1
+ #   df.loc[df["Momentum"] < 0, "SAMX"] = -1
 
     # Totale SAM
     df["SAM"] = df[["SAMK", "SAMG", "SAMT", "SAMD", "SAMM", "SAMX"]].sum(axis=1)
